@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <defs>
+    <linearGradient id="afRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <linearGradient id="afGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Centered inside 72dp safe zone (18dp to 90dp) -->
+  <g transform="translate(54, 54) scale(0.62) translate(-256, -256)">
+    <!-- Shield Header Ribbon -->
+    <path d="M 160 70 L 352 70 Q 362 70 364 80 L 374 130 Q 376 138 368 142 L 256 166 L 144 142 Q 136 138 138 130 L 148 80 Q 150 70 160 70 Z" fill="url(#afRed)"/>
+    <text x="256" y="105" font-family="system-ui, sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="2">ENGLISH STUDY CENTRE</text>
+    <text x="256" y="128" font-family="system-ui, sans-serif" font-weight="800" font-size="14" fill="#fef08a" text-anchor="middle">Dir. Deepak Sir</text>
+
+    <!-- Monogram Plaque -->
+    <rect x="130" y="148" width="252" height="88" rx="18" fill="#081329" stroke="url(#afRed)" stroke-width="3"/>
+    <text x="256" y="218" font-family="system-ui, 'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="74" fill="url(#afGold)" text-anchor="middle" letter-spacing="5">ESC</text>
+
+    <!-- White Open Book Symbol -->
+    <g transform="translate(0, 10)">
+      <path d="M 256 280 C 222 262, 166 258, 122 268 L 122 338 C 166 328, 222 332, 256 352 Z" fill="#ffffff"/>
+      <path d="M 256 280 C 290 262, 346 258, 390 268 L 390 338 C 346 328, 290 332, 256 352 Z" fill="#f1f5f9"/>
+
+      <line x1="146" y1="284" x2="236" y2="294" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="146" y1="298" x2="236" y2="308" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="146" y1="312" x2="220" y2="322" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+
+      <line x1="276" y1="294" x2="366" y2="284" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="276" y1="308" x2="366" y2="298" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="276" y1="322" x2="350" y2="312" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+
+      <path d="M 253 280 L 253 370 L 256 366 L 259 370 L 259 280 Z" fill="url(#afRed)"/>
+      <polygon points="253,366 256,362 259,366 256,374" fill="#f59e0b"/>
+    </g>
+
+    <!-- MCQ/OMR Answer Bubble Pill -->
+    <g transform="translate(0, 16)">
+      <rect x="136" y="366" width="240" height="44" rx="22" fill="#071228" stroke="#3b82f6" stroke-width="2.5"/>
+      <g transform="translate(172, 388)">
+        <circle cx="0" cy="0" r="14" fill="url(#afRed)"/>
+        <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle">A</text>
+      </g>
+      <g transform="translate(228, 388)">
+        <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#1e3a8a" stroke-width="2"/>
+        <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#0f172a" text-anchor="middle">B</text>
+      </g>
+      <g transform="translate(284, 388)">
+        <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#1e3a8a" stroke-width="2"/>
+        <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#0f172a" text-anchor="middle">C</text>
+      </g>
+      <g transform="translate(340, 388)">
+        <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#1e3a8a" stroke-width="2"/>
+        <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#0f172a" text-anchor="middle">D</text>
+      </g>
+    </g>
+  </g>
+</svg>

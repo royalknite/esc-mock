@@ -1,0 +1,6 @@
+{
+  "name": "ENGLISH STUDY CENTRE – Question Paper & OMR PDF Generator",
+  "description": "Professional Question Paper and OMR Answer Sheet A4 PDF generator for English Study Centre, Dir. Deepak Sir, Akashi Sasaram.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

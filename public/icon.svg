@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Royal/Navy Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#091429"/>
+      <stop offset="45%" stop-color="#0e234e"/>
+      <stop offset="80%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#172554"/>
+    </linearGradient>
+
+    <!-- Crimson Red Accent Gradient -->
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="50%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+
+    <!-- Golden Accent Gradient for ESC Monogram -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb"/>
+      <stop offset="35%" stop-color="#fef08a"/>
+      <stop offset="70%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+
+    <!-- Top Gloss Highlight -->
+    <linearGradient id="glossGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter for Floating Badge & Book -->
+    <filter id="shadowFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+
+    <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#ffffff" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Base Rounded-Square App Icon (Android Squircle 112px radius) -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- Subtle Ambient Radial Glow -->
+  <circle cx="256" cy="220" r="190" fill="#2563eb" opacity="0.22"/>
+
+  <!-- Premium Dual Border Accent (Gold & Crimson) -->
+  <rect x="14" y="14" width="484" height="484" rx="98" fill="none" stroke="#3b82f6" stroke-width="3" opacity="0.6"/>
+  <rect x="22" y="22" width="468" height="468" rx="90" fill="none" stroke="url(#redGrad)" stroke-width="3" stroke-dasharray="14 8"/>
+
+  <!-- Subtle Glass Refraction Arc at Top -->
+  <path d="M 14 112 C 14 58, 58 14, 112 14 L 400 14 C 454 14, 498 58, 498 112 L 498 230 Q 256 270 14 230 Z" fill="url(#glossGrad)"/>
+
+  <!-- Center Crest Container with Shadow -->
+  <g filter="url(#shadowFilter)">
+    <!-- Crimson Shield Header Ribbon -->
+    <path d="M 156 58 L 356 58 Q 366 58 368 68 L 378 126 Q 380 136 370 140 L 256 168 L 142 140 Q 132 136 134 126 L 144 68 Q 146 58 156 58 Z" fill="url(#redGrad)"/>
+    <text x="256" y="96" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle" letter-spacing="3">ACADEMIC EXCELLENCE</text>
+    <text x="256" y="122" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="13" fill="#fef08a" text-anchor="middle" letter-spacing="2">ESTD. SASARAM • 2026-27</text>
+
+    <!-- Central ESC Monogram Crest Plaque -->
+    <rect x="116" y="148" width="280" height="92" rx="20" fill="#081329" stroke="url(#redGrad)" stroke-width="3"/>
+    
+    <!-- Bold ESC Monogram -->
+    <text x="256" y="222" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="78" fill="url(#goldGrad)" text-anchor="middle" letter-spacing="6" filter="url(#innerGlow)">ESC</text>
+  </g>
+
+  <!-- WHITE OPEN BOOK SYMBOL (Spreads gracefully across center) -->
+  <g filter="url(#shadowFilter)" transform="translate(0, 10)">
+    <!-- Book Backing Pages Shadow -->
+    <path d="M 256 288 C 220 270, 160 266, 116 276 L 116 348 C 160 338, 220 342, 256 360 C 292 342, 352 338, 396 348 L 396 276 C 352 266, 292 270, 256 288 Z" fill="#cbd5e1"/>
+
+    <!-- Main Crisp White Open Book Pages -->
+    <!-- Left Page -->
+    <path d="M 256 280 C 222 262, 166 258, 122 268 L 122 338 C 166 328, 222 332, 256 352 Z" fill="#ffffff"/>
+    <!-- Right Page -->
+    <path d="M 256 280 C 290 262, 346 258, 390 268 L 390 338 C 346 328, 290 332, 256 352 Z" fill="#f8fafc"/>
+
+    <!-- Page Text Lines Representation (Left Page) -->
+    <line x1="146" y1="284" x2="236" y2="294" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="146" y1="298" x2="236" y2="308" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="146" y1="312" x2="220" y2="322" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Page Text Lines Representation (Right Page) -->
+    <line x1="276" y1="294" x2="366" y2="284" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="276" y1="308" x2="366" y2="298" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="276" y1="322" x2="350" y2="312" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Center Spine & Red Bookmark Ribbon -->
+    <path d="M 253 280 L 253 370 L 256 366 L 259 370 L 259 280 Z" fill="url(#redGrad)"/>
+    <!-- Gold Ribbon Tip -->
+    <polygon points="253,366 256,362 259,366 256,374" fill="#f59e0b"/>
+  </g>
+
+  <!-- MCQ / OMR ANSWER BUBBLE SYMBOL (Interactive Examination Indicator) -->
+  <g transform="translate(0, 16)">
+    <!-- OMR Bubble Capsule Bar -->
+    <rect x="136" y="366" width="240" height="42" rx="21" fill="#071228" stroke="#3b82f6" stroke-width="2.5" filter="url(#shadowFilter)"/>
+    
+    <!-- Bubble A: Filled / Marked Answer Bubble (Demonstrating OMR examination) -->
+    <g transform="translate(172, 387)">
+      <circle cx="0" cy="0" r="14" fill="url(#redGrad)" stroke="#fca5a5" stroke-width="1.5"/>
+      <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#ffffff" text-anchor="middle">A</text>
+    </g>
+
+    <!-- Bubble B: Unfilled Clean Option -->
+    <g transform="translate(228, 387)">
+      <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#1e3a8a" stroke-width="2"/>
+      <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#0f172a" text-anchor="middle">B</text>
+    </g>
+
+    <!-- Bubble C: Unfilled Clean Option -->
+    <g transform="translate(284, 387)">
+      <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#1e3a8a" stroke-width="2"/>
+      <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#0f172a" text-anchor="middle">C</text>
+    </g>
+
+    <!-- Bubble D: Unfilled Clean Option -->
+    <g transform="translate(340, 387)">
+      <circle cx="0" cy="0" r="14" fill="#ffffff" stroke="#1e3a8a" stroke-width="2"/>
+      <text x="0" y="5" font-family="system-ui, sans-serif" font-weight="900" font-size="13" fill="#0f172a" text-anchor="middle">D</text>
+    </g>
+  </g>
+
+  <!-- INSTITUTE & DIRECTOR BRANDING TEXT -->
+  <!-- Main Name: ENGLISH STUDY CENTRE -->
+  <text x="256" y="450" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="25" fill="#ffffff" text-anchor="middle" letter-spacing="2">
+    ENGLISH STUDY CENTRE
+  </text>
+
+  <!-- Subtitle: Dir. Deepak Sir • Akashi Sasaram -->
+  <g transform="translate(0, 480)">
+    <!-- Small Golden Star Left -->
+    <path d="M 120 -6 L 122 -1 L 127 -1 L 123 2 L 125 7 L 120 4 L 115 7 L 117 2 L 113 -1 L 118 -1 Z" fill="#f59e0b"/>
+    
+    <text x="256" y="0" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="16" fill="#f87171" text-anchor="middle" letter-spacing="1">
+      Dir. Deepak Sir • Sasaram
+    </text>
+
+    <!-- Small Golden Star Right -->
+    <path d="M 392 -6 L 394 -1 L 399 -1 L 395 2 L 397 7 L 392 4 L 387 7 L 389 2 L 385 -1 L 390 -1 Z" fill="#f59e0b"/>
+  </g>
+</svg>

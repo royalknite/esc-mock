@@ -1,0 +1,68 @@
+{
+  "id": ".",
+  "name": "ENGLISH STUDY CENTRE",
+  "short_name": "ENGLISH STUDY",
+  "description": "Professional Question Paper & OMR Answer Sheet Generator for English Study Centre, Dir. Deepak Sir, Akashi Sasaram.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1a56db",
+  "background_color": "#ffffff",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "MCQ Question Paper",
+      "short_name": "MCQ Paper",
+      "description": "Create 25 or 50 Q/page Question Paper PDF",
+      "url": "./?tab=paper",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "OMR Answer Sheet",
+      "short_name": "OMR Sheet",
+      "description": "Generate 1-50 to 1-250 OMR Answer Sheet PDF",
+      "url": "./?tab=omr",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Build & Download APK",
+      "short_name": "Build APK",
+      "description": "Android APK installer & offline export",
+      "url": "./?tab=apk",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
