@@ -46,7 +46,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
   // Auto-fit: shrink font per page until every question is fully visible (no clipping).
   useLayoutEffect(() => {
     fitAllPages(containerRef.current);
-  }, [questions, settings]);
+  }, [questions, settings, currentPageIndex]);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,7 +94,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
 
   const isCompact = settings.format === '50';
   // 25/page stays comfortably readable; 50/page uses a compact but legible size.
-  const baseFont = isCompact ? 10.5 : 13;
+  const baseFont = isCompact ? 12.5 : 17;
   const minFont = isCompact ? 9.5 : 11.5;
   const pagePadding = isCompact ? '18px 22px 16px 22px' : '24px 30px 20px 30px';
 
