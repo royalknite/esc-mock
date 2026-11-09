@@ -220,25 +220,6 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
         }
       }
 
-      // html2canvas can place text on a different baseline than the browser inside
-      // small flex circles. The live preview is correct, but the exported PDF then
-      // paints A-D / 0-9 partly outside their bubbles. Normalize only the circular
-      // OMR markers in the cloned PDF document; do not alter the on-screen preview.
-      clonedRoot.querySelectorAll<HTMLElement>('.rounded-full').forEach((bubble) => {
-        bubble.style.setProperty('display', 'flex', 'important');
-        bubble.style.setProperty('align-items', 'center', 'important');
-        bubble.style.setProperty('justify-content', 'center', 'important');
-        bubble.style.setProperty('line-height', '1', 'important');
-        bubble.style.setProperty('padding', '0', 'important');
-        bubble.style.setProperty('margin-block', '0', 'important');
-        bubble.style.setProperty('text-align', 'center', 'important');
-        bubble.style.setProperty('text-indent', '0', 'important');
-        bubble.style.setProperty('white-space', 'nowrap', 'important');
-        bubble.style.setProperty('overflow', 'hidden', 'important');
-        bubble.style.setProperty('box-sizing', 'border-box', 'important');
-        bubble.style.setProperty('flex-shrink', '0', 'important');
-      });
-
       // Re-apply capture geometry after inlining computed styles.
       clonedRoot.style.setProperty('display', 'flex', 'important');
       clonedRoot.style.setProperty('position', 'fixed', 'important');
@@ -247,6 +228,26 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       clonedRoot.style.setProperty('transform', 'none', 'important');
       clonedRoot.style.setProperty('margin', '0', 'important');
       clonedRoot.style.setProperty('overflow', 'hidden', 'important');
+
+      // Fix OMR bubble text only in the PDF clone. html2canvas/WebView can paint
+      // flex-centered text below the visual center even though the live preview is correct.
+      // A single-line box whose line-height equals the bubble height gives the glyph a
+      // stable vertical center in the exported raster PDF.
+      clonedRoot.querySelectorAll<HTMLElement>('.rounded-full').forEach((bubble) => {
+        const bubbleHeight = bubble.getBoundingClientRect().height;
+        if (!bubbleHeight) return;
+        bubble.style.setProperty('display', 'block', 'important');
+        bubble.style.setProperty('line-height', `${bubbleHeight}px`, 'important');
+        bubble.style.setProperty('height', `${bubbleHeight}px`, 'important');
+        bubble.style.setProperty('padding', '0', 'important');
+        bubble.style.setProperty('margin', '0', 'important');
+        bubble.style.setProperty('text-align', 'center', 'important');
+        bubble.style.setProperty('text-indent', '0', 'important');
+        bubble.style.setProperty('white-space', 'nowrap', 'important');
+        bubble.style.setProperty('overflow', 'hidden', 'important');
+        bubble.style.setProperty('box-sizing', 'border-box', 'important');
+        bubble.style.setProperty('flex-shrink', '0', 'important');
+      });
 
       // Wait until the fonts are really loaded inside the clone before html2canvas measures text.
       try {
