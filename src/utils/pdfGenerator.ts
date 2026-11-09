@@ -130,6 +130,19 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       const clonedRoot = clonedDocument.querySelector(`[data-pdf-capture="true"]`) as HTMLElement | null;
       if (!clonedRoot) return;
 
+      // ROOT CAUSE of squeezed words / overlapping matras / short border:
+      // the preview container has transform: scale(zoom). Inside the clone that scale
+      // shrinks text boxes (measured) while glyphs are painted at full size.
+      // Remove every ancestor transform/zoom so the page is captured at exactly 100%.
+      let ancestor: HTMLElement | null = clonedRoot.parentElement;
+      while (ancestor) {
+        ancestor.style.setProperty('transform', 'none', 'important');
+        ancestor.style.setProperty('zoom', '1', 'important');
+        ancestor.style.setProperty('transition', 'none', 'important');
+        ancestor.style.setProperty('overflow', 'visible', 'important');
+        ancestor = ancestor.parentElement;
+      }
+
       clonedRoot.classList.remove('hidden');
       clonedRoot.classList.remove('print:block');
       clonedRoot.classList.add('block');
