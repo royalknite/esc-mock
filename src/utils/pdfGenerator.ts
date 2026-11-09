@@ -336,8 +336,8 @@ export async function generateA4PDFFromElements(
       // Larger, softly colored institute watermark on every generated PDF page.
       // Keep the blue tint light enough for question text and answer options to remain readable.
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(42);
-      pdf.setTextColor(177, 202, 244);
+      pdf.setFontSize(40);
+      pdf.setTextColor(239, 180, 180);
       pdf.text('ENGLISH STUDY CENTRE', 105, 153, {
         angle: 38,
         align: 'center',
