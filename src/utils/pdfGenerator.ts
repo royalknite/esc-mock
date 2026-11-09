@@ -42,6 +42,28 @@ function blobToBase64(blob: Blob): Promise<string> {
  * computed styles (normally rgb/px values), then removes external stylesheets.
  * This keeps the visual layout while avoiding the color-parser failure.
  */
+/** Collects @font-face rules (Hindi/English fonts) from every readable stylesheet. */
+function collectFontFaceCss(): string {
+  const out: string[] = [];
+  const walk = (rules: CSSRuleList) => {
+    Array.from(rules).forEach((rule) => {
+      if (typeof CSSFontFaceRule !== 'undefined' && rule instanceof CSSFontFaceRule) {
+        out.push(rule.cssText);
+      } else if ('cssRules' in rule && (rule as CSSGroupingRule).cssRules) {
+        walk((rule as CSSGroupingRule).cssRules);
+      }
+    });
+  };
+  Array.from(document.styleSheets).forEach((sheet) => {
+    try {
+      walk(sheet.cssRules);
+    } catch {
+      // Cross-origin stylesheet (Google Fonts link) - kept as a <link> instead.
+    }
+  });
+  return out.join('\n');
+}
+
 function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement, clonedDocument: Document) {
   const originalNodes = [originalRoot, ...Array.from(originalRoot.querySelectorAll<HTMLElement>('*'))];
 
@@ -70,7 +92,18 @@ function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement
 
   // Styles are now inline as browser-resolved RGB/px values. Removing CSS
   // avoids html2canvas parsing Tailwind v4's unsupported oklch declarations.
-  clonedDocument.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove());
+  // IMPORTANT: keep the fonts. If the font files are removed, the clone is laid out with
+  // fallback fonts while the canvas paints with the real font -> words stick together.
+  const fontCss = collectFontFaceCss();
+  clonedDocument.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
+    if (node instanceof HTMLLinkElement && /fonts\.googleapis\.com/i.test(node.href)) return;
+    node.remove();
+  });
+  if (fontCss) {
+    const fontStyle = clonedDocument.createElement('style');
+    fontStyle.textContent = fontCss;
+    clonedDocument.head.appendChild(fontStyle);
+  }
 }
 
 async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boolean): Promise<HTMLCanvasElement> {
@@ -93,7 +126,7 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
     windowHeight: Math.max(1123, height),
     scrollX: 0,
     scrollY: 0,
-    onclone: (clonedDocument) => {
+    onclone: async (clonedDocument) => {
       const clonedRoot = clonedDocument.querySelector(`[data-pdf-capture="true"]`) as HTMLElement | null;
       if (!clonedRoot) return;
 
@@ -127,6 +160,13 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       clonedRoot.style.setProperty('transform', 'none', 'important');
       clonedRoot.style.setProperty('margin', '0', 'important');
       clonedRoot.style.setProperty('overflow', 'hidden', 'important');
+
+      // Wait until the fonts are really loaded inside the clone before html2canvas measures text.
+      try {
+        if (clonedDocument.fonts?.ready) await clonedDocument.fonts.ready;
+      } catch {
+        // ignore
+      }
     },
     });
   } finally {
@@ -203,7 +243,13 @@ export async function generateA4PDFFromElements(
       fitQuestionColumns(pageEl);
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
-      const canvas = await captureA4Page(pageEl);
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await captureA4Page(pageEl);
+      } finally {
+        // Must be removed right after each page, otherwise page 2 captures page 1's marker.
+        pageEl.removeAttribute('data-pdf-capture');
+      }
       const imgData = canvas.toDataURL('image/jpeg', 0.92);
 
       if (i > 0) pdf.addPage('a4', 'portrait');
