@@ -32,7 +32,7 @@ export const PaperSettingsPanel: React.FC<PaperSettingsPanelProps> = ({
             Question Paper Settings &amp; Layout
           </h3>
           <p className="text-xs text-slate-500">
-            Customize header branding and choose 25- or 50-questions-per-page layout
+            Choose the layout: 50 questions in 2 pages or 100 questions in 2 pages
           </p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export const PaperSettingsPanel: React.FC<PaperSettingsPanelProps> = ({
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                <span>Exactly 25 questions on each A4 page</span>
+                <span>50 questions = exactly 2 A4 pages</span>
               </li>
             </ul>
           </div>
@@ -132,11 +132,11 @@ export const PaperSettingsPanel: React.FC<PaperSettingsPanelProps> = ({
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                <span>Exactly 50 MCQs on each A4 page</span>
+                <span>100 questions = exactly 2 A4 pages</span>
               </li>
               <li className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                <span>Compact spacing; keeps all 50 questions on one A4 page</span>
+                <span>Compact spacing; 100 questions fit into 2 A4 pages</span>
               </li>
             </ul>
           </div>

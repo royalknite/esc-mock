@@ -17,9 +17,8 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // FORMAT 25 = 25 questions on each A4 page. FORMAT 50 = 50 questions on each A4 page.
-  // Therefore: 50 questions => 2 pages in format 25, but 1 page in format 50;
-  // 100 questions => 4 pages in format 25, but 2 pages in format 50.
+  // Format 1: 25 MCQs per page (50 questions = 2 pages).
+  // Format 2: 50 MCQs per page (100 questions = 2 pages).
   const questionsPerPage = settings.format === '50' ? 50 : 25;
   const leftColCount = settings.format === '50' ? 25 : 13;
 
@@ -94,8 +93,10 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
   };
 
   const isCompact = settings.format === '50';
-  const baseFont = isCompact ? 8.5 : 12;
-  const pagePadding = isCompact ? '20px 24px 18px 24px' : '26px 32px 22px 32px';
+  // 25/page stays comfortably readable; 50/page uses a compact but legible size.
+  const baseFont = isCompact ? 8.2 : 11.2;
+  const minFont = isCompact ? 6.2 : 8.8;
+  const pagePadding = isCompact ? '18px 22px 16px 22px' : '24px 30px 20px 30px';
 
   return (
     <div className="space-y-4">
@@ -218,6 +219,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                 key={page.pageNumber}
                 data-page-index={pIdx}
                 data-base-font={baseFont}
+                data-min-font={minFont}
                 className={`a4-sheet border border-slate-300 shadow-xl mb-8 flex flex-col justify-between text-slate-900 font-hindi ${
                   isVisibleOnScreen ? 'block' : 'block'
                 }`}
@@ -288,7 +290,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                         {settings.timeAllowed && (
                           <span>Time: {settings.timeAllowed}</span>
                         )}
-                        <span>Total Qs: {settings.totalQuestions || questions.length}</span>
+                        <span>Total Qs: {questions.length}</span>
                         {settings.fullMarks && (
                           <span>F.M.: {settings.fullMarks}</span>
                         )}
