@@ -1,24 +1,12 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Question, PaperSettings } from '../../types';
 import { Download, Printer, ZoomIn, ZoomOut, Maximize2, ChevronLeft, ChevronRight, FileDown, CheckCircle } from 'lucide-react';
-import { generateA4PDFFromElements, PDFGenerationProgress, printElementContainer } from '../../utils/pdfGenerator';
+import { generateA4PDFFromElements, PDFGenerationProgress, printElementContainer, isMobileOrNative } from '../../utils/pdfGenerator';
+import { fitAllPages } from '../../utils/fitPage';
 
 interface PaperPreviewProps {
   questions: Question[];
   settings: PaperSettings;
-}
-
-function questionDensity(q: Question, compact: boolean): string {
-  const textLength = [q.text, q.options.A, q.options.B, q.options.C, q.options.D].join(' ').length;
-  if (!compact) {
-    if (textLength > 360) return 'text-[7.2px] leading-[1.0]';
-    if (textLength > 240) return 'text-[8px] leading-[1.04]';
-    return 'text-[9px] leading-[1.08]';
-  }
-  if (textLength > 420) return 'text-[5.6px] leading-[0.96]';
-  if (textLength > 300) return 'text-[6.1px] leading-[0.98]';
-  if (textLength > 200) return 'text-[6.5px] leading-[1.0]';
-  return 'text-[7px] leading-[1.02]';
 }
 
 export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings }) => {
@@ -56,6 +44,23 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
     });
   }
 
+  // Auto-fit: shrink font per page until every question is fully visible (no clipping).
+  useLayoutEffect(() => {
+    fitAllPages(containerRef.current);
+  }, [questions, settings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) fitAllPages(containerRef.current);
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [questions, settings]);
+
   // Handle PDF Generation
   const handleDownloadPDF = async () => {
     if (!containerRef.current) return;
@@ -78,11 +83,18 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
     }
   };
 
+  // Phone / Android app: browser print dialog does not work, so Print also saves the PDF.
   const handlePrint = () => {
+    if (isMobileOrNative()) {
+      handleDownloadPDF();
+      return;
+    }
+    fitAllPages(containerRef.current);
     printElementContainer('paper-preview-container');
   };
 
   const isCompact = settings.format === '50';
+  const baseFont = isCompact ? 8.5 : 12;
   const pagePadding = isCompact ? '20px 24px 18px 24px' : '26px 32px 22px 32px';
 
   return (
@@ -205,6 +217,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
               <div
                 key={page.pageNumber}
                 data-page-index={pIdx}
+                data-base-font={baseFont}
                 className={`a4-sheet border border-slate-300 shadow-xl mb-8 flex flex-col justify-between text-slate-900 font-hindi ${
                   isVisibleOnScreen ? 'block' : 'block'
                 }`}
@@ -220,7 +233,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                 }}
               >
                 {/* Top Section: Header */}
-                <div>
+                <div className="flex flex-col" style={{ flex: '1 1 0', minHeight: 0 }}>
                   {/* Institute Master Header (Matching Item 7 Reference) */}
                   <div className="border-b-2 border-slate-900 pb-2 mb-2">
                     <div className="grid grid-cols-3 items-center">
@@ -284,86 +297,46 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                   </div>
 
                   {/* Two Column Layout Container */}
-                  <div className="grid grid-cols-2 gap-x-4 relative">
+                  <div className="grid grid-cols-2 gap-x-4 relative" style={{ flex: '1 1 0', minHeight: 0 }}>
                     {/* Vertical Dividing Line */}
                     <div
                       className="absolute top-0 bottom-0 left-1/2 w-px bg-slate-300 -translate-x-1/2 pointer-events-none"
                       style={{ height: '100%' }}
                     ></div>
 
-                    {/* Left Column */}
-                    <div className="min-w-0 space-y-0.5 pr-2">
-                      {page.leftCol.map((q) => (
-                        <div
-                          key={q.id}
-                          className={`text-slate-900 ${questionDensity(q, isCompact)} mb-[1px]`}
-                        >
-                          <div className="flex items-start gap-1">
-                            <span className={`font-bold text-slate-950 shrink-0 ${questionDensity(q, isCompact)}`}>
-                              {q.number}.
-                            </span>
-                            <span className="min-w-0 flex-1 font-semibold text-slate-900 whitespace-normal break-words">
-                              {q.text}
-                            </span>
+                    {[page.leftCol, page.rightCol].map((col, cIdx) => (
+                      <div
+                        key={cIdx}
+                        data-fit-col="true"
+                        className={`min-w-0 ${cIdx === 0 ? 'pr-2' : 'pl-2'}`}
+                        style={{
+                          height: '100%',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          lineHeight: 1.12,
+                        }}
+                      >
+                        {col.map((q) => (
+                          <div key={q.id} data-q={q.number} className="text-slate-900" style={{ flexShrink: 0 }}>
+                            <div className="flex items-start gap-1">
+                              <span className="font-bold text-slate-950 shrink-0">{q.number}.</span>
+                              <span className="min-w-0 flex-1 font-semibold text-slate-900 whitespace-normal break-words">
+                                {q.text}
+                              </span>
+                            </div>
+                            <div className="mt-0.5 grid grid-cols-2 gap-x-1 gap-y-0 pl-3 text-slate-800">
+                              {(['A', 'B', 'C', 'D'] as const).map((opt) => (
+                                <span key={opt} className="min-w-0 break-words whitespace-normal">
+                                  <strong className="text-slate-950">({opt})</strong> {q.options[opt]}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                          <div
-                            className={`mt-0.5 grid ${
-                              isCompact ? 'grid-cols-2 gap-x-1 gap-y-0' : 'grid-cols-2 gap-x-1 gap-y-0.5'
-                            } pl-3 text-slate-800`}
-                          >
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(A)</strong> {q.options.A}
-                            </span>
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(B)</strong> {q.options.B}
-                            </span>
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(C)</strong> {q.options.C}
-                            </span>
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(D)</strong> {q.options.D}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Right Column */}
-                    <div className="min-w-0 space-y-0.5 pl-2">
-                      {page.rightCol.map((q) => (
-                        <div
-                          key={q.id}
-                          className={`text-slate-900 ${questionDensity(q, isCompact)} mb-[1px]`}
-                        >
-                          <div className="flex items-start gap-1">
-                            <span className={`font-bold text-slate-950 shrink-0 ${questionDensity(q, isCompact)}`}>
-                              {q.number}.
-                            </span>
-                            <span className="min-w-0 flex-1 font-semibold text-slate-900 whitespace-normal break-words">
-                              {q.text}
-                            </span>
-                          </div>
-                          <div
-                            className={`mt-0.5 grid ${
-                              isCompact ? 'grid-cols-2 gap-x-1 gap-y-0' : 'grid-cols-2 gap-x-1 gap-y-0.5'
-                            } pl-3 text-slate-800`}
-                          >
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(A)</strong> {q.options.A}
-                            </span>
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(B)</strong> {q.options.B}
-                            </span>
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(C)</strong> {q.options.C}
-                            </span>
-                            <span className={`min-w-0 break-words whitespace-normal ${questionDensity(q, isCompact)}`}>
-                              <strong className="text-slate-950">(D)</strong> {q.options.D}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
