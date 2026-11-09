@@ -316,7 +316,7 @@ export const OMRPreview: React.FC<OMRPreviewProps> = ({ settings }) => {
                                   {Array.from({ length: 7 }).map((_, cIdx) => (
                                     <div
                                       key={cIdx}
-                                      className="w-3.5 h-3.5 min-w-[14px] min-h-[14px] box-border shrink-0 rounded-full border border-slate-800 text-[8px] font-bold inline-flex items-center justify-center leading-none text-center bg-white"
+                                      className="w-3.5 h-3.5 box-border shrink-0 rounded-full border border-slate-800 text-[8px] leading-none font-bold inline-flex items-center justify-center bg-white"
                                     >
                                       {digit}
                                     </div>
@@ -389,7 +389,7 @@ export const OMRPreview: React.FC<OMRPreviewProps> = ({ settings }) => {
                               {(['A', 'B', 'C', 'D'] as const).map((letter) => (
                                 <div
                                   key={letter}
-                                  className="w-[18px] h-[18px] min-w-[18px] min-h-[18px] box-border shrink-0 rounded-full border-[1.5px] border-slate-900 inline-flex items-center justify-center text-[10px] font-black leading-none text-center text-slate-900 hover:bg-slate-100 cursor-pointer select-none transition-colors"
+                                  className="w-[18px] h-[18px] box-border shrink-0 rounded-full border-[1.5px] border-slate-900 inline-flex items-center justify-center text-[10px] leading-none font-black text-slate-900 hover:bg-slate-100 cursor-pointer select-none transition-colors"
                                 >
                                   {letter}
                                 </div>
