@@ -64,12 +64,12 @@ function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement
   clonedRoot.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove());
 }
 
-async function captureA4Page(pageEl: HTMLElement): Promise<HTMLCanvasElement> {
+async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boolean): Promise<HTMLCanvasElement> {
   const width = pageEl.offsetWidth || 794;
   const height = pageEl.offsetHeight || 1123;
 
   return html2canvas(pageEl, {
-    scale: 2,
+    scale,
     useCORS: true,
     allowTaint: false,
     backgroundColor: '#ffffff',
@@ -98,7 +98,13 @@ async function captureA4Page(pageEl: HTMLElement): Promise<HTMLCanvasElement> {
       clonedRoot.style.setProperty('height', `${height}px`, 'important');
       clonedRoot.style.setProperty('overflow', 'hidden', 'important');
 
-      inlineComputedStyles(pageEl, clonedRoot);
+      if (inlineStyles) {
+        try {
+          inlineComputedStyles(pageEl, clonedRoot);
+        } catch (e) {
+          console.warn('inlineComputedStyles failed', e);
+        }
+      }
 
       // Re-apply capture geometry after inlining computed styles.
       clonedRoot.style.setProperty('display', 'flex', 'important');
@@ -110,6 +116,30 @@ async function captureA4Page(pageEl: HTMLElement): Promise<HTMLCanvasElement> {
       clonedRoot.style.setProperty('overflow', 'hidden', 'important');
     },
   });
+}
+
+/** Tries high quality first, then lighter settings (phones can run out of memory or fail on some styles). */
+async function captureA4Page(pageEl: HTMLElement): Promise<HTMLCanvasElement> {
+  const attempts: Array<[number, boolean]> = [
+    [2, true],
+    [1.5, true],
+    [1, true],
+    [1.5, false],
+    [1, false],
+  ];
+  let lastError: unknown;
+  for (const [scale, inlineStyles] of attempts) {
+    try {
+      const canvas = await captureOnce(pageEl, scale, inlineStyles);
+      if (canvas.width > 0 && canvas.height > 0) return canvas;
+      lastError = new Error('Empty canvas');
+    } catch (e) {
+      console.warn(`PDF capture failed (scale ${scale}, inline ${inlineStyles})`, e);
+      lastError = e;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 /** Captures every A4 sheet, including pages hidden by the preview navigator. */
