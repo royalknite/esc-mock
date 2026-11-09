@@ -30,13 +30,13 @@
 }
 
 @media print {
-  body {
+  html, body {
     background-color: #ffffff !important;
     color: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
   }
-  
+
   .no-print {
     display: none !important;
   }
@@ -45,12 +45,25 @@
     display: block !important;
   }
 
+  /* Every A4 page must print, including ones hidden off-screen in the preview. */
+  #paper-preview-container {
+    transform: none !important;
+  }
+
   .a4-sheet {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
     box-shadow: none !important;
+    border: none !important;
     margin: 0 !important;
-    width: 100% !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
     page-break-after: always;
     break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   .a4-sheet:last-of-type {
@@ -60,6 +73,6 @@
 
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 0;
   }
 }
