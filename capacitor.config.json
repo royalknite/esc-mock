@@ -1,6 +1,6 @@
 {
   "appId": "com.englishstudycentre.deepaksir",
-  "appName": "ENGLISH STUDY CENTRE",
+  "appName": "ESC",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
