@@ -76,7 +76,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
       });
     } catch (err) {
       console.error('Error generating PDF:', err);
-      alert('Failed to generate PDF. Please try again or use the Print button.');
+      alert(`PDF nahi ban payi.\nError: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsGeneratingPDF(false);
       setPdfProgress(null);
