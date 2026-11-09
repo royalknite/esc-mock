@@ -160,11 +160,8 @@ export async function exportCapacitorAndroidZip(): Promise<void> {
 </manifest>`;
   zip.file('android_template/AndroidManifest.xml', androidManifest);
 
-  // 4. Android Adaptive Vector Drawables & XMLs
-  zip.file('android_template/res/drawable/ic_launcher_foreground.xml', ANDROID_IC_LAUNCHER_FOREGROUND_XML);
-  zip.file('android_template/res/drawable/ic_launcher_background.xml', ANDROID_IC_LAUNCHER_BACKGROUND_XML);
-  zip.file('android_template/res/mipmap-anydpi-v26/ic_launcher.xml', ANDROID_IC_LAUNCHER_ADAPTIVE_XML);
-  zip.file('android_template/res/mipmap-anydpi-v26/ic_launcher_round.xml', ANDROID_IC_LAUNCHER_ADAPTIVE_XML);
+  // 4. Use the full-color Book + ESC PNG artwork as the Android launcher icon.
+  // Do not add adaptive vector XMLs here: they would override the complete PNG mark.
   zip.file('android_template/res/values/strings.xml', `<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ESC</string>

@@ -321,6 +321,21 @@ export async function generateA4PDFFromElements(
       fitQuestionColumns(pageEl);
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
+      // Paint the watermark as the page background so MCQ text/options are
+      // rendered above it by html2canvas (instead of covering them afterward).
+      const watermarkSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500">
+          <text x="600" y="270" text-anchor="middle"
+            transform="rotate(-38 600 250)"
+            font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700"
+            fill="#efb4b4" fill-opacity="0.38">ENGLISH STUDY CENTRE</text>
+        </svg>`;
+      const watermarkUrl = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(watermarkSvg)}")`;
+      pageEl.style.setProperty('background-image', watermarkUrl, 'important');
+      pageEl.style.setProperty('background-position', 'center center', 'important');
+      pageEl.style.setProperty('background-repeat', 'no-repeat', 'important');
+      pageEl.style.setProperty('background-size', '88% auto', 'important');
+
       let canvas: HTMLCanvasElement;
       try {
         canvas = await captureA4Page(pageEl);
@@ -333,15 +348,6 @@ export async function generateA4PDFFromElements(
       if (i > 0) pdf.addPage('a4', 'portrait');
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
 
-      // Larger, softly colored institute watermark on every generated PDF page.
-      // Keep the blue tint light enough for question text and answer options to remain readable.
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(40);
-      pdf.setTextColor(239, 180, 180);
-      pdf.text('ENGLISH STUDY CENTRE', 105, 153, {
-        angle: 38,
-        align: 'center',
-      });
     }
   } finally {
     originalStyles.forEach(({ el, style, className }) => {
