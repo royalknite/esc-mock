@@ -328,7 +328,7 @@ export async function generateA4PDFFromElements(
           <text x="600" y="270" text-anchor="middle"
             transform="rotate(-38 600 250)"
             font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700"
-            fill="#efb4b4" fill-opacity="0.38">ENGLISH STUDY CENTRE</text>
+            fill="#000000" fill-opacity="0.38">ENGLISH STUDY CENTRE</text>
         </svg>`;
       const watermarkUrl = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(watermarkSvg)}")`;
       pageEl.style.setProperty('background-image', watermarkUrl, 'important');
