@@ -332,6 +332,16 @@ export async function generateA4PDFFromElements(
 
       if (i > 0) pdf.addPage('a4', 'portrait');
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+
+      // Light diagonal institute watermark on every generated PDF page.
+      // Keep the tint very pale so question text and answer options remain readable.
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(30);
+      pdf.setTextColor(239, 211, 211);
+      pdf.text('ENGLISH STUDY CENTRE', 105, 153, {
+        angle: 38,
+        align: 'center',
+      });
     }
   } finally {
     originalStyles.forEach(({ el, style, className }) => {

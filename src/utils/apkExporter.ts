@@ -33,62 +33,26 @@ const ANDROID_IC_LAUNCHER_FOREGROUND_XML = `<?xml version="1.0" encoding="utf-8"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Crimson header shield -->
-    <path
-        android:fillColor="#DC2626"
-        android:pathData="M35,22 L73,22 Q76,22 76,26 L78,38 Q78,41 74,42 L54,48 L34,42 Q30,41 32,38 L34,26 Q34,22 35,22 Z" />
-    <!-- Monogram plaque -->
-    <path
-        android:fillColor="#081329"
-        android:strokeColor="#DC2626"
-        android:strokeWidth="1.5"
-        android:pathData="M28,42 L80,42 A4,4 0 0,1 84,46 L84,58 A4,4 0 0,1 80,62 L28,62 A4,4 0 0,1 24,58 L24,46 A4,4 0 0,1 28,42 Z" />
-    <!-- ESC letter markers -->
-    <!-- E -->
-    <path
-        android:fillColor="#F59E0B"
-        android:pathData="M32,48 h10 v2.5 h-7.5 v2.5 h6 v2.5 h-6 v2.5 h7.5 v2.5 h-10 Z" />
-    <!-- S -->
-    <path
-        android:fillColor="#F59E0B"
-        android:pathData="M48,48 h10 v3 h-7.5 v2 h7.5 v7.5 h-10 v-3 h7.5 v-2 h-7.5 Z" />
-    <!-- C -->
-    <path
-        android:fillColor="#F59E0B"
-        android:pathData="M64,48 h10 v3 h-7.5 v6.5 h7.5 v3 h-10 Z" />
-    <!-- White Open Book Symbol -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,66 C46,62 36,61 28,63 L28,76 C36,74 46,75 54,79 Z" />
-    <path
-        android:fillColor="#F1F5F9"
-        android:pathData="M54,66 C62,62 72,61 80,63 L80,76 C72,74 62,75 54,79 Z" />
-    <!-- Spine ribbon -->
-    <path
-        android:fillColor="#DC2626"
-        android:pathData="M53.5,66 h1 v15 h-1 Z" />
-    <!-- OMR Bubble Pill -->
-    <path
-        android:fillColor="#071228"
-        android:strokeColor="#3B82F6"
-        android:strokeWidth="1"
-        android:pathData="M30,83 h48 a5,5 0 0,1 5,5 v0 a5,5 0 0,1 -5,5 h-48 a5,5 0 0,1 -5,-5 v0 a5,5 0 0,1 5,-5 Z" />
-    <!-- Bubble A: Filled Red -->
-    <path
-        android:fillColor="#DC2626"
-        android:pathData="M37,88 m-3.5,0 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0" />
-    <!-- Bubble B -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M48,88 m-3.5,0 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0" />
-    <!-- Bubble C -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M59,88 m-3.5,0 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0" />
-    <!-- Bubble D -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M70,88 m-3.5,0 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0" />
+    <!-- Rising sun above the open book -->
+    <path android:fillColor="#FFD21F"
+        android:pathData="M54,8 a11,11 0 1,0 0,22 a11,11 0 1,0 0,-22" />
+    <path android:fillColor="#FFD21F"
+        android:pathData="M52,3 h4 v7 h-4 z M34,10 l4,-3 4,8 -4,2 z M70,7 l4,3 -4,7 -4,-2 z M24,23 l2,-4 8,4 -2,4 z M74,23 l8,-4 2,4 -8,4 z" />
+    <!-- Open book -->
+    <path android:fillColor="#FFFFFF" android:strokeColor="#F5B800" android:strokeWidth="1.2"
+        android:pathData="M54,34 C45,28 32,27 21,31 L21,47 C33,43 45,44 54,51 Z" />
+    <path android:fillColor="#FFFFFF" android:strokeColor="#F5B800" android:strokeWidth="1.2"
+        android:pathData="M54,34 C63,28 76,27 87,31 L87,47 C75,43 63,44 54,51 Z" />
+    <path android:fillColor="#1D4ED8" android:pathData="M53,35 h2 v16 h-2 z" />
+    <!-- ESC monogram -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M20,57 h19 v5 h-13 v4 h11 v5 h-11 v4 h13 v5 h-19 z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M63,57 h-14 q-5,0 -5,5 v4 q0,5 5,5 h9 v4 h-14 v5 h15 q5,0 5,-5 v-4 q0,-5 -5,-5 h-9 v-4 h13 z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M89,57 h-14 q-5,0 -5,5 v13 q0,5 5,5 h14 v-5 h-13 v-13 h13 z" />
+    <!-- Gold base accent -->
+    <path android:fillColor="#FFD21F" android:pathData="M25,88 h58 v4 h-58 z" />
 </vector>`;
 
 /**
