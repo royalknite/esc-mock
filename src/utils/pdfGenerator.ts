@@ -3,11 +3,19 @@ import html2canvas from 'html2canvas';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { fitQuestionColumns } from './fitPage';
 
 export interface PDFGenerationProgress {
   currentPage: number;
   totalPages: number;
   status: string;
+}
+
+/** True inside the Android app or on a phone/tablet browser (where window.print() does not work). */
+export function isMobileOrNative(): boolean {
+  if (Capacitor.isNativePlatform()) return true;
+  const ua = navigator.userAgent || '';
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
 }
 
 function safeFileName(fileName: string): string {
@@ -147,6 +155,10 @@ export async function generateA4PDFFromElements(
       pageEl.style.setProperty('box-shadow', 'none', 'important');
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
+      // Re-fit so no question is clipped in the PDF (fonts may have loaded since render).
+      fitQuestionColumns(pageEl);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
       const canvas = await captureA4Page(pageEl);
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
@@ -172,10 +184,24 @@ export async function generateA4PDFFromElements(
   const sanitizedName = safeFileName(fileName);
   const blob = pdf.output('blob');
 
-  // Android/Capacitor: browser download attributes are unreliable in WebView.
-  // Save to the native cache and hand the file to Android's share/save sheet.
+  // Android app: save the PDF straight into the phone's Documents folder.
+  // If the phone blocks that, fall back to the share/save sheet.
   if (Capacitor.isNativePlatform()) {
     const base64 = await blobToBase64(blob);
+
+    try {
+      await Filesystem.writeFile({
+        path: sanitizedName,
+        data: base64,
+        directory: Directory.Documents,
+        recursive: true,
+      });
+      alert(`PDF download ho gayi: Documents/${sanitizedName}`);
+      return;
+    } catch (saveErr) {
+      console.warn('Direct save to Documents failed, using share sheet', saveErr);
+    }
+
     await Filesystem.writeFile({
       path: sanitizedName,
       data: base64,
@@ -190,14 +216,14 @@ export async function generateA4PDFFromElements(
 
     const canShare = await Share.canShare();
     if (!canShare.value) {
-      throw new Error('Android sharing is unavailable. Please use Print.');
+      throw new Error('Unable to save PDF on this device.');
     }
 
     await Share.share({
       title: sanitizedName,
       text: 'English Study Centre PDF',
       files: [uriResult.uri],
-      dialogTitle: 'Save or share PDF',
+      dialogTitle: 'Save PDF',
     });
     return;
   }
