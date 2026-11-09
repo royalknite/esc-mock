@@ -94,8 +94,8 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
 
   const isCompact = settings.format === '50';
   // 25/page stays comfortably readable; 50/page uses a compact but legible size.
-  const baseFont = isCompact ? 8.2 : 11.2;
-  const minFont = isCompact ? 6.2 : 8.8;
+  const baseFont = isCompact ? 10.5 : 13;
+  const minFont = isCompact ? 9.5 : 11.5;
   const pagePadding = isCompact ? '18px 22px 16px 22px' : '24px 30px 20px 30px';
 
   return (
@@ -231,7 +231,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                   boxSizing: 'border-box',
                   overflow: 'hidden',
                   backgroundColor: '#ffffff',
-                  ...(isVisibleOnScreen ? {} : { position: 'absolute' as const, left: '-10000px', top: '0' }),
+                  ...(isVisibleOnScreen ? {} : { display: 'none' }),
                 }}
               >
                 {/* Top Section: Header */}
@@ -316,12 +316,13 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                           overflow: 'hidden',
                           display: 'flex',
                           flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          lineHeight: 1.12,
+                          justifyContent: 'flex-start',
+                          gap: isCompact ? '5px' : '10px',
+                          lineHeight: isCompact ? 1.16 : 1.25,
                         }}
                       >
                         {col.map((q) => (
-                          <div key={q.id} data-q={q.number} className="text-slate-900" style={{ flexShrink: 0 }}>
+                          <div key={q.id} data-q={q.number} className="text-slate-900" style={{ flexShrink: 0, breakInside: 'avoid' }}>
                             <div className="flex items-start gap-1">
                               <span className="font-bold text-slate-950 shrink-0">{q.number}.</span>
                               <span className="min-w-0 flex-1 font-semibold text-slate-900 whitespace-normal break-words">
