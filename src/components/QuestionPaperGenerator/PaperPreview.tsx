@@ -243,11 +243,11 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                       <div className="text-left text-[11px] leading-tight space-y-0.5">
                         <div className="font-bold text-slate-900">
                           <span className="font-extrabold text-blue-900">Sub: </span>
-                          <span>{settings.subject || 'ENGLISH'}</span>
+                          <span className="font-hindi" lang="hi">{settings.subject || 'ENGLISH'}</span>
                         </div>
                         <div className="font-semibold text-slate-800">
                           <span className="font-bold text-blue-900">Lesson: </span>
-                          <span>{settings.lesson || 'All Chapters'}</span>
+                          <span className="font-hindi" lang="hi">{settings.lesson || 'All Chapters'}</span>
                         </div>
                       </div>
 

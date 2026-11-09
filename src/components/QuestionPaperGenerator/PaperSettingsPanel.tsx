@@ -157,8 +157,9 @@ export const PaperSettingsPanel: React.FC<PaperSettingsPanelProps> = ({
               type="text"
               value={settings.subject}
               onChange={(e) => handleInputChange('subject', e.target.value)}
-              className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
-              placeholder="e.g. ENGLISH"
+              className="w-full text-xs font-medium font-hindi px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+              lang="hi"
+              placeholder="e.g. ENGLISH / हिंदी"
             />
           </div>
 
@@ -170,8 +171,9 @@ export const PaperSettingsPanel: React.FC<PaperSettingsPanelProps> = ({
               type="text"
               value={settings.lesson}
               onChange={(e) => handleInputChange('lesson', e.target.value)}
-              className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
-              placeholder="e.g. TENSE & VOICE"
+              className="w-full text-xs font-medium font-hindi px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+              lang="hi"
+              placeholder="e.g. TENSE & VOICE / पाठ का नाम"
             />
           </div>
 
