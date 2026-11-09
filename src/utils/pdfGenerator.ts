@@ -336,8 +336,8 @@ export async function generateA4PDFFromElements(
       // Light diagonal institute watermark on every generated PDF page.
       // Keep the tint very pale so question text and answer options remain readable.
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(30);
-      pdf.setTextColor(239, 211, 211);
+      pdf.setFontSize(42);
+      pdf.setTextColor(0, 0, 0);
       pdf.text('ENGLISH STUDY CENTRE', 105, 153, {
         angle: 38,
         align: 'center',
