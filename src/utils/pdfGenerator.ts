@@ -43,37 +43,30 @@ function blobToBase64(blob: Blob): Promise<string> {
  * This keeps the visual layout while avoiding the color-parser failure.
  */
 function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement, clonedDocument: Document) {
-  const originalNodes = [originalRoot, ...Array.from(originalRoot.querySelectorAll('*'))];
-  const clonedNodes = [clonedRoot, ...Array.from(clonedRoot.querySelectorAll('*'))];
+  const originalNodes = [originalRoot, ...Array.from(originalRoot.querySelectorAll<HTMLElement>('*'))];
+  const clonedNodes = [clonedRoot, ...Array.from(clonedRoot.querySelectorAll<HTMLElement>('*'))];
   const count = Math.min(originalNodes.length, clonedNodes.length);
 
   for (let i = 0; i < count; i++) {
-    const original = originalNodes[i] as HTMLElement;
-    const cloned = clonedNodes[i] as HTMLElement;
+    const original = originalNodes[i];
+    const cloned = clonedNodes[i];
     const computed = window.getComputedStyle(original);
-
-    // Remove source inline declarations first. The resolved computed values below
-    // preserve the rendered appearance without carrying Tailwind CSS variables.
-    cloned.removeAttribute('style');
 
     for (let p = 0; p < computed.length; p++) {
       const property = computed.item(p);
-      const value = computed.getPropertyValue(property).trim();
-
-      // html2canvas 1.4.x cannot parse modern CSS color functions or custom vars.
-      // Computed standard colors are normally resolved by the browser to rgb().
-      if (!value || property.startsWith('--') || /\b(oklch|oklab|lab|lch|color-mix)\(/i.test(value)) {
-        continue;
-      }
-      cloned.style.setProperty(property, value);
+      // Tailwind v4 stores OKLCH values in custom properties. html2canvas 1.4
+      // cannot parse them, and they are not needed once resolved styles are inline.
+      if (!property || property.startsWith('--')) continue;
+      const value = computed.getPropertyValue(property);
+      if (!value || /\b(?:oklch|oklab)\(/i.test(value)) continue;
+      try { cloned.style.setProperty(property, value); } catch { /* ignore unsupported CSS */ }
     }
-
     cloned.style.setProperty('box-sizing', 'border-box');
   }
 
-  // Tailwind v4 emits oklch() in the global stylesheet (usually in <head>),
-  // so remove stylesheets from the entire cloned document after inlining.
-  clonedDocument.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove());
+  // The target now has resolved inline styles; remove stylesheets from the clone
+  // so html2canvas never parses unsupported Tailwind color declarations.
+  clonedDocument.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove());
 }
 
 async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boolean): Promise<HTMLCanvasElement> {
@@ -110,12 +103,12 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       clonedRoot.style.setProperty('height', `${height}px`, 'important');
       clonedRoot.style.setProperty('overflow', 'hidden', 'important');
 
-      try {
-        if (inlineStyles) inlineComputedStyles(pageEl, clonedRoot, clonedDocument);
-        else clonedDocument.querySelectorAll('style, link[rel=\"stylesheet\"]').forEach((node) => node.remove());
-      } catch (e) {
-        console.warn('PDF clone style cleanup failed', e);
-        clonedDocument.querySelectorAll('style, link[rel=\"stylesheet\"]').forEach((node) => node.remove());
+      if (inlineStyles) {
+        try {
+          inlineComputedStyles(pageEl, clonedRoot, clonedDocument);
+        } catch (e) {
+          console.warn('inlineComputedStyles failed', e);
+        }
       }
 
       // Re-apply capture geometry after inlining computed styles.
@@ -125,9 +118,6 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       clonedRoot.style.setProperty('top', '0', 'important');
       clonedRoot.style.setProperty('transform', 'none', 'important');
       clonedRoot.style.setProperty('margin', '0', 'important');
-      clonedRoot.style.setProperty('box-shadow', 'none', 'important');
-      clonedRoot.style.setProperty('width', `${width}px`, 'important');
-      clonedRoot.style.setProperty('height', `${height}px`, 'important');
       clonedRoot.style.setProperty('overflow', 'hidden', 'important');
     },
   });
@@ -136,11 +126,10 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
 /** Tries high quality first, then lighter settings (phones can run out of memory or fail on some styles). */
 async function captureA4Page(pageEl: HTMLElement): Promise<HTMLCanvasElement> {
   const attempts: Array<[number, boolean]> = [
-    [2, true],
+    [1.7, true],
     [1.5, true],
+    [1.25, true],
     [1, true],
-    [1.5, false],
-    [1, false],
   ];
   let lastError: unknown;
   for (const [scale, inlineStyles] of attempts) {
@@ -205,7 +194,7 @@ export async function generateA4PDFFromElements(
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
       const canvas = await captureA4Page(pageEl);
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgData = canvas.toDataURL('image/jpeg', 0.82);
 
       if (i > 0) pdf.addPage('a4', 'portrait');
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');

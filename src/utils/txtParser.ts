@@ -34,34 +34,29 @@ export function parseMCQText(rawContent: string): ParseResult {
   const lines = content.split('\n');
   const blocks: { qNumStr: string; lines: string[] }[] = [];
   let currentBlock: { qNumStr: string; lines: string[] } | null = null;
+  const preambleLines: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const match = line.match(/^\s*(?:(?:Q|Question|प्रश्न)\s*[\.\:]?\s*)?([0-9]{1,4}|[०-९]{1,4})\s*[\.\)\-\:\—]\s*(.*)$/i);
+    const match = line.match(/^\s*(?:(?:Q|Question|प्रश्न)\s*[\.:]?\s*)?([0-9]{1,4}|[०-९]{1,4})\s*[\.\)\-\:\—]\s*(.*)$/i);
 
     if (match) {
-      if (currentBlock) {
-        blocks.push(currentBlock);
-      }
-      currentBlock = {
-        qNumStr: match[1],
-        lines: [match[2]], // the rest of the question text on that same line
-      };
-    } else {
-      if (currentBlock) {
-        currentBlock.lines.push(line);
-      } else if (line.trim().length > 0) {
-        // Preamble or unnumbered first question. Let's start block 1 if not started
-        currentBlock = {
-          qNumStr: '1',
-          lines: [line],
-        };
-      }
+      if (currentBlock) blocks.push(currentBlock);
+      currentBlock = { qNumStr: match[1], lines: [match[2]] };
+    } else if (currentBlock) {
+      currentBlock.lines.push(line);
+    } else if (line.trim()) {
+      // A title, institute name or chapter heading before Q1 is not a question.
+      preambleLines.push(line);
     }
   }
 
-  if (currentBlock) {
-    blocks.push(currentBlock);
+  if (currentBlock) blocks.push(currentBlock);
+
+  // Preserve support for a fully unnumbered single-question TXT.
+  // If numbered MCQs exist, preamble/title lines are intentionally ignored.
+  if (blocks.length === 0 && preambleLines.length > 0) {
+    blocks.push({ qNumStr: '1', lines: preambleLines });
   }
 
   // If standard block splitting didn't find multiple questions, try secondary delimiter (e.g. empty lines or double newline)
