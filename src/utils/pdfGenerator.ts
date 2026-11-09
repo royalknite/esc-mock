@@ -44,28 +44,32 @@ function blobToBase64(blob: Blob): Promise<string> {
  */
 function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement, clonedDocument: Document) {
   const originalNodes = [originalRoot, ...Array.from(originalRoot.querySelectorAll<HTMLElement>('*'))];
-  const clonedNodes = [clonedRoot, ...Array.from(clonedRoot.querySelectorAll<HTMLElement>('*'))];
-  const count = Math.min(originalNodes.length, clonedNodes.length);
 
-  for (let i = 0; i < count; i++) {
-    const original = originalNodes[i];
-    const cloned = clonedNodes[i];
+  // Match source and cloned nodes by a stable temporary ID. Query order can
+  // differ in html2canvas clones, which previously caused page 2 to lose styles.
+  originalNodes.forEach((original) => {
+    const id = original.getAttribute('data-pdf-node-id');
+    if (!id) return;
+    const cloned = original === originalRoot ? clonedRoot : clonedRoot.querySelector<HTMLElement>(`[data-pdf-node-id="${id}"]`);
+    if (!cloned) return;
+
     const computed = window.getComputedStyle(original);
-
     for (let p = 0; p < computed.length; p++) {
       const property = computed.item(p);
-      // Tailwind v4 stores OKLCH values in custom properties. html2canvas 1.4
-      // cannot parse them, and they are not needed once resolved styles are inline.
       if (!property || property.startsWith('--')) continue;
       const value = computed.getPropertyValue(property);
       if (!value || /\b(?:oklch|oklab)\(/i.test(value)) continue;
-      try { cloned.style.setProperty(property, value); } catch { /* ignore unsupported CSS */ }
+      try {
+        cloned.style.setProperty(property, value);
+      } catch {
+        // Ignore CSS properties not supported by the WebView.
+      }
     }
     cloned.style.setProperty('box-sizing', 'border-box');
-  }
+  });
 
-  // The target now has resolved inline styles; remove stylesheets from the clone
-  // so html2canvas never parses unsupported Tailwind color declarations.
+  // Styles are now inline as browser-resolved RGB/px values. Removing CSS
+  // avoids html2canvas parsing Tailwind v4's unsupported oklch declarations.
   clonedDocument.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => node.remove());
 }
 
@@ -73,7 +77,11 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
   const width = pageEl.offsetWidth || 794;
   const height = pageEl.offsetHeight || 1123;
 
-  return html2canvas(pageEl, {
+  const sourceNodes = [pageEl, ...Array.from(pageEl.querySelectorAll<HTMLElement>('*'))];
+  sourceNodes.forEach((node, index) => node.setAttribute('data-pdf-node-id', `pdf-node-${index}`));
+
+  try {
+    return await html2canvas(pageEl, {
     scale,
     useCORS: true,
     allowTaint: false,
@@ -120,16 +128,19 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       clonedRoot.style.setProperty('margin', '0', 'important');
       clonedRoot.style.setProperty('overflow', 'hidden', 'important');
     },
-  });
+    });
+  } finally {
+    sourceNodes.forEach((node) => node.removeAttribute('data-pdf-node-id'));
+  }
 }
 
 /** Tries high quality first, then lighter settings (phones can run out of memory or fail on some styles). */
 async function captureA4Page(pageEl: HTMLElement): Promise<HTMLCanvasElement> {
   const attempts: Array<[number, boolean]> = [
-    [1.7, true],
+    [2.5, true],
+    [2.2, true],
+    [1.8, true],
     [1.5, true],
-    [1.25, true],
-    [1, true],
   ];
   let lastError: unknown;
   for (const [scale, inlineStyles] of attempts) {
@@ -180,21 +191,20 @@ export async function generateA4PDFFromElements(
       // Ensure the source node is measurable even when it is the non-selected preview page.
       pageEl.classList.remove('hidden');
       pageEl.classList.add('block');
+      // Reveal each page in place before capture; never move it off-screen.
+      // Off-screen absolute positioning caused Android WebView to lose page 2 layout.
       pageEl.style.setProperty('display', 'flex', 'important');
-      pageEl.style.setProperty('position', 'fixed', 'important');
-      pageEl.style.setProperty('left', '-10000px', 'important');
-      pageEl.style.setProperty('top', '0', 'important');
-      pageEl.style.setProperty('margin', '0', 'important');
+      pageEl.style.setProperty('position', 'relative', 'important');
+      pageEl.style.setProperty('left', 'auto', 'important');
+      pageEl.style.setProperty('top', 'auto', 'important');
       pageEl.style.setProperty('transform', 'none', 'important');
-      pageEl.style.setProperty('box-shadow', 'none', 'important');
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
-      // Re-fit so no question is clipped in the PDF (fonts may have loaded since render).
       fitQuestionColumns(pageEl);
       await new Promise((resolve) => requestAnimationFrame(resolve));
 
       const canvas = await captureA4Page(pageEl);
-      const imgData = canvas.toDataURL('image/jpeg', 0.82);
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
 
       if (i > 0) pdf.addPage('a4', 'portrait');
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
@@ -202,6 +212,7 @@ export async function generateA4PDFFromElements(
   } finally {
     originalStyles.forEach(({ el, style, className }) => {
       el.removeAttribute('data-pdf-capture');
+      el.querySelectorAll('[data-pdf-node-id]').forEach((node) => node.removeAttribute('data-pdf-node-id'));
       if (className === null) el.removeAttribute('class');
       else el.setAttribute('class', className);
       if (style === null) el.removeAttribute('style');
