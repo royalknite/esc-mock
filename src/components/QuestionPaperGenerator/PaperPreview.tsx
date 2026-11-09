@@ -95,7 +95,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
   const isCompact = settings.format === '50';
   // 25/page stays comfortably readable; 50/page uses a compact but legible size.
   const baseFont = isCompact ? 12.5 : 17;
-  const minFont = isCompact ? 9.5 : 11.5;
+  const minFont = isCompact ? 8 : 11.5;
   const pagePadding = isCompact ? '18px 22px 16px 22px' : '24px 30px 20px 30px';
 
   return (
@@ -329,7 +329,16 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                                 {q.text}
                               </span>
                             </div>
-                            <div className="mt-0.5 grid grid-cols-2 gap-x-1 gap-y-0 pl-3 text-slate-800">
+                            <div
+                              className="mt-0.5 grid gap-x-1 gap-y-0 pl-3 text-slate-800"
+                              style={{
+                                // 50/page: put A B C D on ONE line when the options are short.
+                                gridTemplateColumns:
+                                  isCompact && (['A', 'B', 'C', 'D'] as const).reduce((n, o) => n + (q.options[o] || '').length, 0) <= 40
+                                    ? 'repeat(4, minmax(0, 1fr))'
+                                    : 'repeat(2, minmax(0, 1fr))',
+                              }}
+                            >
                               {(['A', 'B', 'C', 'D'] as const).map((opt) => (
                                 <span key={opt} className="min-w-0 break-words whitespace-normal">
                                   <strong className="text-slate-950">({opt})</strong> {q.options[opt]}
