@@ -333,11 +333,11 @@ export async function generateA4PDFFromElements(
       if (i > 0) pdf.addPage('a4', 'portrait');
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
 
-      // Light diagonal institute watermark on every generated PDF page.
-      // Keep the tint very pale so question text and answer options remain readable.
+      // Larger, softly colored institute watermark on every generated PDF page.
+      // Keep the blue tint light enough for question text and answer options to remain readable.
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(42);
-      pdf.setTextColor(0, 0, 0);
+      pdf.setTextColor(177, 202, 244);
       pdf.text('ENGLISH STUDY CENTRE', 105, 153, {
         angle: 38,
         align: 'center',
