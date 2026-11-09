@@ -155,11 +155,16 @@ export const PaperSettingsPanel: React.FC<PaperSettingsPanelProps> = ({
             </label>
             <input
               type="text"
-              value={settings.subject}
-              onChange={(e) => handleInputChange('subject', e.target.value)}
-              className="w-full text-xs font-medium font-hindi px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+              inputMode="text"
               lang="hi"
-              placeholder="e.g. ENGLISH / हिंदी"
+              dir="auto"
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              value={settings.subject ?? ''}
+              onChange={(e) => handleInputChange('subject', e.currentTarget.value)}
+              className="w-full text-xs font-medium font-hindi px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+              placeholder="Subject / विषय लिखें"
             />
           </div>
 
@@ -169,11 +174,16 @@ export const PaperSettingsPanel: React.FC<PaperSettingsPanelProps> = ({
             </label>
             <input
               type="text"
-              value={settings.lesson}
-              onChange={(e) => handleInputChange('lesson', e.target.value)}
-              className="w-full text-xs font-medium font-hindi px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+              inputMode="text"
               lang="hi"
-              placeholder="e.g. TENSE & VOICE / पाठ का नाम"
+              dir="auto"
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              value={settings.lesson ?? ''}
+              onChange={(e) => handleInputChange('lesson', e.currentTarget.value)}
+              className="w-full text-xs font-medium font-hindi px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 bg-white"
+              placeholder="Lesson / पाठ का नाम लिखें"
             />
           </div>
 
