@@ -42,6 +42,59 @@ function blobToBase64(blob: Blob): Promise<string> {
  * computed styles (normally rgb/px values), then removes external stylesheets.
  * This keeps the visual layout while avoiding the color-parser failure.
  */
+/**
+ * Builds @font-face CSS with the fonts embedded as data: URIs (only the latin + devanagari
+ * subsets of Inter / Noto Sans Devanagari). The html2canvas clone lives in an iframe that
+ * would otherwise load fonts late or not at all, so its layout (line wrapping, word spaces)
+ * differed from what is painted -> glued words, big gaps, cut questions.
+ */
+let embeddedFontCssPromise: Promise<string> | null = null;
+
+function getEmbeddedFontCss(): Promise<string> {
+  if (!embeddedFontCssPromise) {
+    embeddedFontCssPromise = buildEmbeddedFontCss().catch((e) => {
+      console.warn('Font embedding failed', e);
+      embeddedFontCssPromise = null; // retry next time
+      return '';
+    });
+  }
+  return embeddedFontCssPromise;
+}
+
+async function buildEmbeddedFontCss(): Promise<string> {
+  const links = Array.from(
+    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href*="fonts.googleapis.com"]')
+  );
+  const wantedFamilies = /Inter|Noto Sans Devanagari/;
+  const wantedSubsets = new Set(['latin', 'devanagari']);
+  const blocks: string[] = [];
+
+  for (const link of links) {
+    const css = await (await fetch(link.href)).text();
+    const re = /\/\*\s*([\w-]+)\s*\*\/\s*(@font-face\s*\{[^}]*\})/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(css)) !== null) {
+      const subset = m[1];
+      const block = m[2];
+      const family = /font-family:\s*['"]?([^;'"]+)['"]?/.exec(block)?.[1] ?? '';
+      if (wantedSubsets.has(subset) && wantedFamilies.test(family)) blocks.push(block);
+    }
+  }
+
+  const urls = Array.from(new Set(blocks.flatMap((b) => Array.from(b.matchAll(/url\((https?:[^)]+)\)/g)).map((x) => x[1]))));
+  const dataUrls = new Map<string, string>();
+  await Promise.all(
+    urls.map(async (u) => {
+      const blob = await (await fetch(u)).blob();
+      dataUrls.set(u, `data:font/woff2;base64,${await blobToBase64(blob)}`);
+    })
+  );
+
+  return blocks
+    .map((b) => b.replace(/url\((https?:[^)]+)\)/g, (_all, u: string) => `url(${dataUrls.get(u) ?? u})`))
+    .join('\n');
+}
+
 /** Collects @font-face rules (Hindi/English fonts) from every readable stylesheet. */
 function collectFontFaceCss(): string {
   const out: string[] = [];
@@ -64,7 +117,7 @@ function collectFontFaceCss(): string {
   return out.join('\n');
 }
 
-function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement, clonedDocument: Document) {
+function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement, clonedDocument: Document, embeddedFontCss: string) {
   const originalNodes = [originalRoot, ...Array.from(originalRoot.querySelectorAll<HTMLElement>('*'))];
 
   // Match source and cloned nodes by a stable temporary ID. Query order can
@@ -92,11 +145,12 @@ function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement
 
   // Styles are now inline as browser-resolved RGB/px values. Removing CSS
   // avoids html2canvas parsing Tailwind v4's unsupported oklch declarations.
-  // IMPORTANT: keep the fonts. If the font files are removed, the clone is laid out with
-  // fallback fonts while the canvas paints with the real font -> words stick together.
-  const fontCss = collectFontFaceCss();
+  // IMPORTANT: keep the fonts in the clone, otherwise it is laid out with fallback fonts
+  // while the canvas paints with the real font -> words stick together / lines wrap wrongly.
+  const fontCss = embeddedFontCss || collectFontFaceCss();
   clonedDocument.head.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
-    if (node instanceof HTMLLinkElement && /fonts\.googleapis\.com/i.test(node.href)) return;
+    // If embedding failed (offline), keep the Google Fonts <link> as a fallback.
+    if (!embeddedFontCss && node instanceof HTMLLinkElement && /fonts\.googleapis\.com/i.test(node.href)) return;
     node.remove();
   });
   if (fontCss) {
@@ -109,6 +163,7 @@ function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement
 async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boolean): Promise<HTMLCanvasElement> {
   const width = pageEl.offsetWidth || 794;
   const height = pageEl.offsetHeight || 1123;
+  const embeddedFontCss = await getEmbeddedFontCss();
 
   const sourceNodes = [pageEl, ...Array.from(pageEl.querySelectorAll<HTMLElement>('*'))];
   sourceNodes.forEach((node, index) => node.setAttribute('data-pdf-node-id', `pdf-node-${index}`));
@@ -159,7 +214,7 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
 
       if (inlineStyles) {
         try {
-          inlineComputedStyles(pageEl, clonedRoot, clonedDocument);
+          inlineComputedStyles(pageEl, clonedRoot, clonedDocument, embeddedFontCss);
         } catch (e) {
           console.warn('inlineComputedStyles failed', e);
         }
@@ -176,6 +231,16 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
 
       // Wait until the fonts are really loaded inside the clone before html2canvas measures text.
       try {
+        if (clonedDocument.fonts?.load) {
+          const sample = 'Aa Total Qs अआ कि';
+          const loads: Promise<unknown>[] = [];
+          ['Inter', 'Noto Sans Devanagari'].forEach((family) => {
+            [400, 500, 600, 700, 800].forEach((w) => {
+              loads.push(clonedDocument.fonts.load(`${w} 16px "${family}"`, sample).catch(() => []));
+            });
+          });
+          await Promise.all(loads);
+        }
         if (clonedDocument.fonts?.ready) await clonedDocument.fonts.ready;
       } catch {
         // ignore
