@@ -80,7 +80,7 @@ const ANDROID_IC_LAUNCHER_ADAPTIVE_XML = `<?xml version="1.0" encoding="utf-8"?>
 
 /**
  * Creates and downloads a ready-to-build Android Capacitor Project ZIP with
- * the official ENGLISH STUDY CENTRE launcher icon embedded across all mipmaps.
+ * the ESC launcher icon embedded across all mipmaps.
  */
 export async function exportCapacitorAndroidZip(): Promise<void> {
   const zip = new JSZip();
@@ -88,7 +88,7 @@ export async function exportCapacitorAndroidZip(): Promise<void> {
   // 1. capacitor.config.json
   const capacitorConfig = {
     appId: 'com.englishstudycentre.deepaksir',
-    appName: 'ENGLISH STUDY CENTRE',
+    appName: 'ESC',
     webDir: 'www',
     bundledWebRuntime: false,
     server: {
@@ -132,7 +132,7 @@ export async function exportCapacitorAndroidZip(): Promise<void> {
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="ENGLISH STUDY CENTRE"
+        android:label="ESC"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
@@ -141,7 +141,7 @@ export async function exportCapacitorAndroidZip(): Promise<void> {
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:name=".MainActivity"
-            android:label="ENGLISH STUDY CENTRE"
+            android:label="ESC"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:exported="true">
@@ -167,8 +167,8 @@ export async function exportCapacitorAndroidZip(): Promise<void> {
   zip.file('android_template/res/mipmap-anydpi-v26/ic_launcher_round.xml', ANDROID_IC_LAUNCHER_ADAPTIVE_XML);
   zip.file('android_template/res/values/strings.xml', `<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ENGLISH STUDY CENTRE</string>
-    <string name="title_activity_main">ENGLISH STUDY CENTRE</string>
+    <string name="app_name">ESC</string>
+    <string name="title_activity_main">ESC</string>
     <string name="package_name">com.englishstudycentre.deepaksir</string>
     <string name="director_name">Dir. Deepak Sir</string>
 </resources>`);
