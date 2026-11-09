@@ -42,29 +42,19 @@ export default function App() {
   const [fileName, setFileName] = useState<string>('');
 
   const [paperSettings, setPaperSettings] = useState<PaperSettings>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_PAPER_SETTINGS);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return {
-      instituteName: 'ENGLISH STUDY CENTRE',
-      directorName: 'Dir. Deepak Sir',
-      location: 'AKASHI SASARAM',
-      mobileNumber: '7050492611',
-      subject: 'ENGLISH',
-      lesson: 'Tense, Voice & Preposition',
-      className: '10 / 12',
-      session: '2026-27',
-      testTitle: 'WEEKLY OBJECTIVE TEST',
-      totalQuestions: 25,
-      timeAllowed: '60 Minutes',
-      fullMarks: '50 Marks',
-      format: '25',
+    const defaults: PaperSettings = {
+      instituteName: 'ENGLISH STUDY CENTRE', directorName: 'Dir. Deepak Sir',
+      location: 'AKASHI SASARAM', mobileNumber: '7050492611', subject: 'ENGLISH',
+      lesson: 'Tense, Voice & Preposition', className: '10 / 12', session: '2026-27',
+      testTitle: 'WEEKLY OBJECTIVE TEST', totalQuestions: 25, timeAllowed: '60 Minutes',
+      fullMarks: '50 Marks', format: '25',
     };
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_PAPER_SETTINGS);
+      if (!saved) return defaults;
+      const parsed = JSON.parse(saved);
+      return { ...defaults, ...(parsed && typeof parsed === 'object' ? parsed : {}) };
+    } catch { return defaults; }
   });
 
   // OMR Sheet State
