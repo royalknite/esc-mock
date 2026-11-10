@@ -236,8 +236,14 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       clonedRoot.querySelectorAll<HTMLElement>('.rounded-full').forEach((bubble) => {
         const bubbleHeight = bubble.getBoundingClientRect().height;
         if (!bubbleHeight) return;
+        // Subtract the border so the text line box matches the *inner* height; otherwise
+        // the glyph is pushed down by the border width inside the bubble.
+        const bubbleStyle = (bubble.ownerDocument.defaultView || window).getComputedStyle(bubble);
+        const borderY =
+          (parseFloat(bubbleStyle.borderTopWidth) || 0) + (parseFloat(bubbleStyle.borderBottomWidth) || 0);
+        const innerHeight = Math.max(1, bubbleHeight - borderY);
         bubble.style.setProperty('display', 'block', 'important');
-        bubble.style.setProperty('line-height', `${bubbleHeight}px`, 'important');
+        bubble.style.setProperty('line-height', `${innerHeight}px`, 'important');
         bubble.style.setProperty('height', `${bubbleHeight}px`, 'important');
         bubble.style.setProperty('padding', '0', 'important');
         bubble.style.setProperty('margin', '0', 'important');
