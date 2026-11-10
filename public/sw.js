@@ -3,7 +3,7 @@
  * Enables native Android WebAPK installation via beforeinstallprompt
  */
 
-const CACHE_NAME = 'esc-exam-v1';
+const CACHE_NAME = 'esc-exam-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
