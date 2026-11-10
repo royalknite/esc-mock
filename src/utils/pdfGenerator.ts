@@ -122,10 +122,17 @@ function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement
 
   // Match source and cloned nodes by a stable temporary ID. Query order can
   // differ in html2canvas clones, which previously caused page 2 to lose styles.
+  // One pass to index cloned nodes (was one full-page search per node = very slow/heavy on 100+ questions).
+  const clonedById = new Map<string, HTMLElement>();
+  clonedRoot.querySelectorAll<HTMLElement>('[data-pdf-node-id]').forEach((node) => {
+    const nodeId = node.getAttribute('data-pdf-node-id');
+    if (nodeId) clonedById.set(nodeId, node);
+  });
+
   originalNodes.forEach((original) => {
     const id = original.getAttribute('data-pdf-node-id');
     if (!id) return;
-    const cloned = original === originalRoot ? clonedRoot : clonedRoot.querySelector<HTMLElement>(`[data-pdf-node-id="${id}"]`);
+    const cloned = original === originalRoot ? clonedRoot : clonedById.get(id);
     if (!cloned) return;
 
     const computed = window.getComputedStyle(original);
@@ -282,12 +289,21 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
 
 /** Tries high quality first, then lighter settings (phones can run out of memory or fail on some styles). */
 async function captureA4Page(pageEl: HTMLElement): Promise<HTMLCanvasElement> {
-  const attempts: Array<[number, boolean]> = [
-    [2.5, true],
-    [2.2, true],
-    [1.8, true],
-    [1.5, true],
-  ];
+  // Dense pages (100+ questions, ~800+ elements) need much more memory: start at a lighter scale
+  // so the phone's WebView does not run out of memory and close the app.
+  const isDensePage = pageEl.querySelectorAll('*').length > 600;
+  const attempts: Array<[number, boolean]> = isDensePage
+    ? [
+        [2, true],
+        [1.7, true],
+        [1.4, true],
+      ]
+    : [
+        [2.5, true],
+        [2.2, true],
+        [1.8, true],
+        [1.5, true],
+      ];
   let lastError: unknown;
   for (const [scale, inlineStyles] of attempts) {
     try {
@@ -372,9 +388,15 @@ export async function generateA4PDFFromElements(
         pageEl.removeAttribute('data-pdf-capture');
       }
       const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      // Release the big bitmap right away (important on phones with limited memory).
+      canvas.width = 0;
+      canvas.height = 0;
 
       if (i > 0) pdf.addPage('a4', 'portrait');
       pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+
+      // Give the WebView a moment to free memory before the next page.
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
     }
   } finally {
