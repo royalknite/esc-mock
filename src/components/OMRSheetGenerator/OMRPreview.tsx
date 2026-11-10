@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { OMRSettings } from '../../types';
 import { Printer, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, FileDown, CheckCircle2 } from 'lucide-react';
-import { generateA4PDFFromElements, PDFGenerationProgress, printElementContainer } from '../../utils/pdfGenerator';
+import { generateA4PDFFromElements, PDFGenerationProgress, printElementContainer, isMobileOrNative } from '../../utils/pdfGenerator';
 
 interface OMRPreviewProps {
   settings: OMRSettings;
@@ -79,7 +79,12 @@ export const OMRPreview: React.FC<OMRPreviewProps> = ({ settings }) => {
     }
   };
 
+  // Phone / Android app: browser print dialog does not work, so Print also saves the PDF.
   const handlePrint = () => {
+    if (isMobileOrNative()) {
+      if (!isGeneratingPDF) handleDownloadPDF();
+      return;
+    }
     printElementContainer('omr-preview-container');
   };
 
