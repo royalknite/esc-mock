@@ -160,55 +160,6 @@ function inlineComputedStyles(originalRoot: HTMLElement, clonedRoot: HTMLElement
   }
 }
 
-interface BubbleLabel {
-  text: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  color: string;
-  fontStyle: string;
-  fontWeight: string;
-  fontSize: number;
-  fontFamily: string;
-}
-
-/**
- * html2canvas paints text a few pixels below the true centre of round bubbles (font-metric
- * quirk, worse in Android WebView). So the letters/digits inside bubbles are hidden in the clone
- * and drawn here directly on the finished canvas, centred on the *ink* of each glyph.
- */
-async function drawBubbleLabels(canvas: HTMLCanvasElement, labels: BubbleLabel[], pageWidth: number) {
-  if (!labels.length) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  const k = canvas.width / pageWidth;
-
-  try {
-    const fonts = Array.from(new Set(labels.map((l) => `${l.fontStyle} ${l.fontWeight} ${l.fontSize}px ${l.fontFamily}`)));
-    if (document.fonts?.load) await Promise.all(fonts.map((f) => document.fonts.load(f).catch(() => [])));
-  } catch {
-    // ignore
-  }
-
-  ctx.save();
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  labels.forEach((l) => {
-    ctx.font = `${l.fontStyle} ${l.fontWeight} ${l.fontSize * k}px ${l.fontFamily}`;
-    ctx.fillStyle = /oklch|oklab|color\(/i.test(l.color) ? '#0f172a' : l.color;
-    const m = ctx.measureText(l.text);
-    const cx = (l.x + l.w / 2) * k;
-    const cy = (l.y + l.h / 2) * k;
-    const hasInk = Number.isFinite(m.actualBoundingBoxAscent) && m.actualBoundingBoxAscent > 0;
-    const inkW = hasInk ? m.actualBoundingBoxLeft + m.actualBoundingBoxRight : m.width;
-    const x = hasInk ? cx - inkW / 2 + m.actualBoundingBoxLeft : cx - m.width / 2;
-    const y = hasInk ? cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2 : cy + l.fontSize * k * 0.35;
-    ctx.fillText(l.text, x, y);
-  });
-  ctx.restore();
-}
-
 async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boolean): Promise<HTMLCanvasElement> {
   const width = pageEl.offsetWidth || 794;
   const height = pageEl.offsetHeight || 1123;
@@ -217,10 +168,8 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
   const sourceNodes = [pageEl, ...Array.from(pageEl.querySelectorAll<HTMLElement>('*'))];
   sourceNodes.forEach((node, index) => node.setAttribute('data-pdf-node-id', `pdf-node-${index}`));
 
-  const bubbleLabels: BubbleLabel[] = [];
-
   try {
-    const canvas = await html2canvas(pageEl, {
+    return await html2canvas(pageEl, {
     scale,
     useCORS: true,
     allowTaint: false,
@@ -287,12 +236,14 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       clonedRoot.querySelectorAll<HTMLElement>('.rounded-full').forEach((bubble) => {
         const bubbleHeight = bubble.getBoundingClientRect().height;
         if (!bubbleHeight) return;
-        // Subtract the border so the text line box matches the *inner* height; otherwise
-        // the glyph is pushed down by the border width inside the bubble.
+        // Line box must match the INNER height (minus border). html2canvas then paints the glyph
+        // about 0.32em below the true centre, so the line box is shortened by 2 x that amount to
+        // lift the text back to the exact centre of the bubble.
         const bubbleStyle = (bubble.ownerDocument.defaultView || window).getComputedStyle(bubble);
         const borderY =
           (parseFloat(bubbleStyle.borderTopWidth) || 0) + (parseFloat(bubbleStyle.borderBottomWidth) || 0);
-        const innerHeight = Math.max(1, bubbleHeight - borderY);
+        const fontPx = parseFloat(bubbleStyle.fontSize) || 10;
+        const innerHeight = Math.max(1, bubbleHeight - borderY - 2 * 0.32 * fontPx);
         bubble.style.setProperty('display', 'block', 'important');
         bubble.style.setProperty('line-height', `${innerHeight}px`, 'important');
         bubble.style.setProperty('height', `${bubbleHeight}px`, 'important');
@@ -304,29 +255,6 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
         bubble.style.setProperty('overflow', 'hidden', 'important');
         bubble.style.setProperty('box-sizing', 'border-box', 'important');
         bubble.style.setProperty('flex-shrink', '0', 'important');
-
-        // Collect single glyph labels (A/B/C/D, 0-9, ✕ ✓ ●) so they can be drawn centred
-        // on the canvas afterwards, then hide the text in the clone.
-        const text = (bubble.textContent || '').trim();
-        if (bubble.children.length === 0 && text.length > 0 && text.length <= 3) {
-          const cs = (bubble.ownerDocument.defaultView || window).getComputedStyle(bubble);
-          const rect = bubble.getBoundingClientRect();
-          const rootRect = clonedRoot.getBoundingClientRect();
-          bubbleLabels.push({
-            text,
-            x: rect.left - rootRect.left,
-            y: rect.top - rootRect.top,
-            w: rect.width,
-            h: rect.height,
-            color: cs.color,
-            fontStyle: cs.fontStyle || 'normal',
-            fontWeight: cs.fontWeight || '700',
-            fontSize: parseFloat(cs.fontSize) || 10,
-            fontFamily: cs.fontFamily || 'sans-serif',
-          });
-          // Remove the text itself (do NOT make colour transparent: the bubble border uses currentColor).
-          bubble.textContent = '';
-        }
       });
 
       // Wait until the fonts are really loaded inside the clone before html2canvas measures text.
@@ -347,8 +275,6 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
       }
     },
     });
-    await drawBubbleLabels(canvas, bubbleLabels, width);
-    return canvas;
   } finally {
     sourceNodes.forEach((node) => node.removeAttribute('data-pdf-node-id'));
   }
