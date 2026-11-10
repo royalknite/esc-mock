@@ -196,7 +196,7 @@ async function drawBubbleLabels(canvas: HTMLCanvasElement, labels: BubbleLabel[]
   ctx.textBaseline = 'alphabetic';
   labels.forEach((l) => {
     ctx.font = `${l.fontStyle} ${l.fontWeight} ${l.fontSize * k}px ${l.fontFamily}`;
-    ctx.fillStyle = l.color;
+    ctx.fillStyle = /oklch|oklab|color\(/i.test(l.color) ? '#0f172a' : l.color;
     const m = ctx.measureText(l.text);
     const cx = (l.x + l.w / 2) * k;
     const cy = (l.y + l.h / 2) * k;
@@ -324,9 +324,8 @@ async function captureOnce(pageEl: HTMLElement, scale: number, inlineStyles: boo
             fontSize: parseFloat(cs.fontSize) || 10,
             fontFamily: cs.fontFamily || 'sans-serif',
           });
-          bubble.style.setProperty('color', 'transparent', 'important');
-          bubble.style.setProperty('-webkit-text-fill-color', 'transparent', 'important');
-          bubble.style.setProperty('text-shadow', 'none', 'important');
+          // Remove the text itself (do NOT make colour transparent: the bubble border uses currentColor).
+          bubble.textContent = '';
         }
       });
 
