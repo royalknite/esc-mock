@@ -10,12 +10,36 @@ interface PaperPreviewProps {
 }
 
 export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings }) => {
-  const [zoom, setZoom] = useState<number>(0.9);
+  const [userZoom, setUserZoom] = useState<number | null>(null);
+  const [fitScale, setFitScale] = useState<number>(0.9);
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
   const [pdfProgress, setPdfProgress] = useState<PDFGenerationProgress | null>(null);
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const updateScale = () => {
+      const w = el.clientWidth;
+      if (!w) return;
+      const horizontalPad = window.innerWidth < 640 ? 16 : 48;
+      const next = Math.min(0.95, Math.max(0.28, (w - horizontalPad) / 794));
+      setFitScale(Number(next.toFixed(3)));
+    };
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(el);
+    window.addEventListener('resize', updateScale);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateScale);
+    };
+  }, []);
+
+  const effectiveZoom = userZoom ?? fitScale;
 
   // Format 1: 25 MCQs per page (50 questions = 2 pages).
   // Format 2: 50 MCQs per page (100 questions = 2 pages).
@@ -133,29 +157,29 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
         </div>
 
         {/* Zoom & Action Buttons */}
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
             <button
-              onClick={() => setZoom((prev) => Math.max(0.5, prev - 0.1))}
+              onClick={() => setUserZoom(Math.max(0.28, Number((effectiveZoom - 0.1).toFixed(2))))}
               className="p-1 rounded hover:bg-white text-slate-700 cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
             <span className="text-xs font-semibold px-1 text-slate-700">
-              {Math.round(zoom * 100)}%
+              {Math.round(effectiveZoom * 100)}%
             </span>
             <button
-              onClick={() => setZoom((prev) => Math.min(1.3, prev + 0.1))}
+              onClick={() => setUserZoom(Math.min(1.3, Number((effectiveZoom + 0.1).toFixed(2))))}
               className="p-1 rounded hover:bg-white text-slate-700 cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setZoom(0.9)}
+              onClick={() => setUserZoom(null)}
               className="p-1 rounded hover:bg-white text-slate-700 cursor-pointer text-xs font-medium px-1.5"
-              title="Reset Zoom"
+              title="Reset Zoom to Fit Screen"
             >
               Fit
             </button>
@@ -200,69 +224,78 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
       )}
 
       {/* Canvas / Paper Container */}
-      <div className="overflow-x-auto pb-8 pt-2 flex justify-center bg-slate-200/60 rounded-2xl p-3 sm:p-6 border border-slate-300 min-h-[600px]">
+      <div
+        ref={wrapperRef}
+        className="w-full overflow-x-auto pb-6 pt-2 flex justify-center bg-slate-200/60 rounded-2xl p-2 sm:p-6 border border-slate-300"
+      >
         <div
-          ref={containerRef}
-          id="paper-preview-container"
+          className="preview-scale-box mx-auto shrink-0"
           style={{
-            transform: `scale(${zoom})`,
-            transformOrigin: 'top center',
+            width: `${Math.round(794 * effectiveZoom)}px`,
+            height: `${Math.round(1123 * effectiveZoom)}px`,
           }}
-          className="transition-transform duration-150"
         >
-          {pages.map((page, pIdx) => {
-            // In screen preview, only show current page if zoomed, or in print mode show all pages
-            const isVisibleOnScreen = pIdx === currentPageIndex;
+          <div
+            ref={containerRef}
+            id="paper-preview-container"
+            style={{
+              width: '794px',
+              transform: `scale(${effectiveZoom})`,
+              transformOrigin: 'top left',
+            }}
+            className="transition-transform duration-150"
+          >
+            {pages.map((page, pIdx) => {
+              const isVisibleOnScreen = pIdx === currentPageIndex;
 
-            return (
-              <div
-                key={page.pageNumber}
-                data-page-index={pIdx}
-                data-base-font={baseFont}
-                data-min-font={minFont}
-                className={`a4-sheet border border-slate-300 shadow-xl mb-8 flex flex-col justify-between text-slate-900 font-hindi ${
-                  isVisibleOnScreen ? 'block' : 'block'
-                }`}
-                style={{
-                  width: '794px',
-                  height: '1123px',
-                  maxHeight: '1123px',
-                  padding: pagePadding,
-                  boxSizing: 'border-box',
-                  overflow: 'hidden',
-                  backgroundColor: '#ffffff',
-                  ...(isVisibleOnScreen ? {} : { display: 'none' }),
-                }}
-              >
-                {/* Top Section: Header */}
-                <div className="flex flex-col" style={{ flex: '1 1 0', minHeight: 0 }}>
-                  {/* Institute Master Header (Matching Item 7 Reference) */}
-                  <div className="border-b-2 border-slate-900 pb-2 mb-2">
-                    <div className="grid grid-cols-3 items-center">
-                      {/* Left Header Column */}
-                      <div className="text-left text-[11px] leading-tight space-y-0.5">
-                        <div className="font-bold text-slate-900">
-                          <span className="font-extrabold text-blue-900">Sub: </span>
-                          <span className="font-hindi" lang="hi" dir="auto">{settings.subject ?? ''}</span>
+              return (
+                <div
+                  key={page.pageNumber}
+                  data-page-index={pIdx}
+                  data-base-font={baseFont}
+                  data-min-font={minFont}
+                  className={`a4-sheet border border-slate-300 shadow-xl mb-8 flex-col justify-between text-slate-900 font-hindi ${
+                    isVisibleOnScreen ? 'flex' : 'hidden print:flex'
+                  }`}
+                  style={{
+                    width: '794px',
+                    height: '1123px',
+                    maxHeight: '1123px',
+                    padding: pagePadding,
+                    boxSizing: 'border-box',
+                    overflow: 'hidden',
+                    backgroundColor: '#ffffff',
+                  }}
+                >
+                  {/* Top Section: Header */}
+                  <div className="flex flex-col" style={{ flex: '1 1 0', minHeight: 0 }}>
+                    {/* Institute Master Header (Matching Item 7 Reference) */}
+                    <div className="border-b-2 border-slate-900 pb-2 mb-2">
+                      <div className="grid grid-cols-3 items-center gap-2">
+                        {/* Left Header Column */}
+                        <div className="text-left text-[11px] leading-tight space-y-0.5 min-w-0 font-hindi">
+                          <div className="font-bold text-slate-900 break-words whitespace-normal">
+                            <span className="font-extrabold text-blue-900">Sub: </span>
+                            <span className="font-hindi" lang="hi" dir="auto">{settings.subject ?? ''}</span>
+                          </div>
+                          <div className="font-semibold text-slate-800 break-words whitespace-normal">
+                            <span className="font-bold text-blue-900">Lesson: </span>
+                            <span className="font-hindi" lang="hi" dir="auto">{settings.lesson ?? ''}</span>
+                          </div>
                         </div>
-                        <div className="font-semibold text-slate-800">
-                          <span className="font-bold text-blue-900">Lesson: </span>
-                          <span className="font-hindi" lang="hi" dir="auto">{settings.lesson ?? ''}</span>
-                        </div>
-                      </div>
 
-                      {/* Center Institute Name & Director */}
-                      <div className="text-center">
-                        <h2 className="text-xl sm:text-[22px] font-black tracking-tight text-blue-950 uppercase font-sans leading-none">
-                          {settings.instituteName || 'ENGLISH STUDY CENTRE'}
-                        </h2>
-                        <div className="text-xs font-bold text-red-700 tracking-wide mt-0.5 uppercase">
-                          {settings.location || 'AKASHI SASARAM'}
+                        {/* Center Institute Name & Director */}
+                        <div className="text-center min-w-0">
+                          <h2 className="text-xl sm:text-[22px] font-black tracking-tight text-blue-950 uppercase font-hindi leading-none">
+                            {settings.instituteName || 'ENGLISH STUDY CENTRE'}
+                          </h2>
+                          <div className="text-xs font-bold text-red-700 tracking-wide mt-0.5 uppercase font-hindi">
+                            {settings.location || 'AKASHI SASARAM'}
+                          </div>
+                          <div className="text-[11px] font-bold text-slate-800 font-hindi">
+                            {settings.directorName || 'Dir. Deepak Sir'}
+                          </div>
                         </div>
-                        <div className="text-[11px] font-bold text-slate-800">
-                          {settings.directorName || 'Dir. Deepak Sir'}
-                        </div>
-                      </div>
 
                       {/* Right Header Column */}
                       <div className="text-right text-[11px] leading-tight space-y-0.5">
@@ -310,7 +343,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                       <div
                         key={cIdx}
                         data-fit-col="true"
-                        className={`min-w-0 ${cIdx === 0 ? 'pr-2' : 'pl-2'}`}
+                        className={`min-w-0 font-hindi ${cIdx === 0 ? 'pr-3' : 'pl-3 pr-1'}`}
                         style={{
                           height: '100%',
                           overflow: 'hidden',
@@ -318,11 +351,11 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                           flexDirection: 'column',
                           justifyContent: 'flex-start',
                           gap: isCompact ? '5px' : '10px',
-                          lineHeight: isCompact ? 1.16 : 1.25,
+                          lineHeight: isCompact ? 1.18 : 1.28,
                         }}
                       >
                         {col.map((q) => (
-                          <div key={q.id} data-q={q.number} className="text-slate-900" style={{ flexShrink: 0, breakInside: 'avoid' }}>
+                          <div key={q.id} data-q={q.number} className="text-slate-900 font-hindi" style={{ flexShrink: 0, breakInside: 'avoid' }}>
                             <div className="flex items-start gap-1">
                               <span className="font-bold text-slate-950 shrink-0">{q.number}.</span>
                               <span className="min-w-0 flex-1 font-semibold text-slate-900 whitespace-normal break-words">
@@ -330,7 +363,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                               </span>
                             </div>
                             <div
-                              className="mt-0.5 grid gap-x-1 gap-y-0 pl-3 text-slate-800"
+                              className="mt-0.5 grid gap-x-1.5 gap-y-0 pl-3 text-slate-800"
                               style={{
                                 // 50/page: put A B C D on ONE line when the options are short.
                                 gridTemplateColumns:
@@ -340,7 +373,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                               }}
                             >
                               {(['A', 'B', 'C', 'D'] as const).map((opt) => (
-                                <span key={opt} className="min-w-0 break-words whitespace-normal">
+                                <span key={opt} className="min-w-0 break-words whitespace-normal pr-0.5">
                                   <strong className="text-slate-950">({opt})</strong> {q.options[opt]}
                                 </span>
                               ))}
@@ -353,7 +386,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
                 </div>
 
                 {/* Bottom Footer Section */}
-                <div className="border-t border-slate-300 pt-1.5 mt-auto flex items-center justify-between text-[10px] text-slate-600 font-sans">
+                <div className="border-t border-slate-300 pt-1.5 mt-auto flex items-center justify-between text-[10px] text-slate-600 font-hindi">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-blue-900 uppercase">
                       {settings.instituteName}
@@ -368,6 +401,7 @@ export const PaperPreview: React.FC<PaperPreviewProps> = ({ questions, settings 
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>

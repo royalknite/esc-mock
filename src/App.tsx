@@ -32,7 +32,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'paper' | 'document' | 'omr' | 'apk'>('home');
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(false);
   const [isQuestionEditorOpen, setIsQuestionEditorOpen] = useState(false);
-  const [showSplash, setShowSplash] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [isManualSplashPreview, setIsManualSplashPreview] = useState(false);
   const [isAPKInstallModalOpen, setIsAPKInstallModalOpen] = useState(false);
 
   // Question Paper State
@@ -88,11 +89,7 @@ export default function App() {
 
   // Initial load: either restore from local storage or load default 25Q sample
   useEffect(() => {
-    const hasWelcomed = localStorage.getItem(STORAGE_KEY_WELCOMED);
-    if (!hasWelcomed) {
-      setIsWelcomeOpen(true);
-      localStorage.setItem(STORAGE_KEY_WELCOMED, 'true');
-    }
+    localStorage.setItem(STORAGE_KEY_WELCOMED, 'true');
 
     const savedQuestions = localStorage.getItem(STORAGE_KEY_QUESTIONS);
     if (savedQuestions) {
@@ -185,7 +182,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/90 text-slate-900 flex flex-col font-sans pb-16 sm:pb-0">
+    <div className="min-h-screen bg-slate-100/90 text-slate-900 flex flex-col font-sans pb-16 sm:pb-0 overflow-x-hidden">
       {/* Chrome Android Native Top Install Banner ("page ke upar Install dia rhata hai") */}
       <TopInstallBanner />
 
@@ -194,12 +191,15 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenWelcome={() => setIsWelcomeOpen(true)}
-        onOpenSplash={() => setShowSplash(true)}
+        onOpenSplash={() => {
+          setIsManualSplashPreview(true);
+          setShowSplash(true);
+        }}
         onOpenInstallModal={() => setIsAPKInstallModalOpen(true)}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 space-y-6 min-w-0">
         {/* Banner with Fast Switcher & Director's Desk */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-wrap items-center justify-between gap-4 no-print">
           <div>
@@ -306,11 +306,11 @@ export default function App() {
 
         {/* TAB 1: QUESTION PAPER GENERATOR */}
         {activeTab === 'paper' && (
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Controls Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: File Upload & Controls */}
-              <div className="lg:col-span-5 space-y-6">
+              <div className="lg:col-span-5 space-y-6 min-w-0">
                 <FileUploadAndEditor
                   questions={questions}
                   warnings={warnings}
@@ -329,7 +329,7 @@ export default function App() {
               </div>
 
               {/* Right Column: Live A4 PDF Preview & Download */}
-              <div className="lg:col-span-7">
+              <div className="lg:col-span-7 min-w-0">
                 <PaperPreview questions={questions} settings={paperSettings} />
               </div>
             </div>
@@ -341,15 +341,15 @@ export default function App() {
 
         {/* TAB 2: OMR SHEET GENERATOR (INDEPENDENT) */}
         {activeTab === 'omr' && (
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: Range & Settings */}
-              <div className="lg:col-span-5 space-y-6">
+              <div className="lg:col-span-5 space-y-6 min-w-0">
                 <OMRSettingsPanel settings={omrSettings} onChange={setOmrSettings} />
               </div>
 
               {/* Right Column: Live A4 OMR Preview & Download */}
-              <div className="lg:col-span-7">
+              <div className="lg:col-span-7 min-w-0">
                 <OMRPreview settings={omrSettings} />
               </div>
             </div>
@@ -359,7 +359,12 @@ export default function App() {
         {/* TAB 3: BUILD APK / DOWNLOAD APK (DEDICATED SECTION) */}
         {activeTab === 'apk' && (
           <div className="space-y-6">
-            <APKDashboard onOpenSplash={() => setShowSplash(true)} />
+            <APKDashboard
+              onOpenSplash={() => {
+                setIsManualSplashPreview(true);
+                setShowSplash(true);
+              }}
+            />
           </div>
         )}
       </main>
@@ -451,8 +456,14 @@ export default function App() {
       {/* Official Android Splash Screen */}
       {showSplash && (
         <SplashScreen
-          onDismiss={() => setShowSplash(false)}
-          isManualPreview={true}
+          onDismiss={() => {
+            setShowSplash(false);
+            setIsManualSplashPreview(false);
+            if (!isManualSplashPreview) {
+              setActiveTab('home');
+            }
+          }}
+          isManualPreview={isManualSplashPreview}
         />
       )}
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { OMRSettings } from '../../types';
 import { CheckCircle2, Sliders, Calendar, Hash, FileCheck, Layers } from 'lucide-react';
+import { HindiTextInput } from '../common/HindiTextInput';
 
 interface OMRSettingsPanelProps {
   settings: OMRSettings;
@@ -174,10 +175,9 @@ export const OMRSettingsPanel: React.FC<OMRSettingsPanelProps> = ({ settings, on
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Exam Title:
             </label>
-            <input
-              type="text"
-              value={settings.examTitle}
-              onChange={(e) => handleInputChange('examTitle', e.target.value)}
+            <HindiTextInput
+              value={settings.examTitle ?? ''}
+              onValueChange={(val) => handleInputChange('examTitle', val)}
               className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 bg-white"
             />
           </div>
@@ -187,11 +187,10 @@ export const OMRSettingsPanel: React.FC<OMRSettingsPanelProps> = ({ settings, on
               Subject &amp; Class:
             </label>
             <div className="grid grid-cols-2 gap-1.5">
-              <input
-                type="text"
-                placeholder="Subject"
-                value={settings.subject}
-                onChange={(e) => handleInputChange('subject', e.target.value)}
+              <HindiTextInput
+                placeholder="Subject / विषय"
+                value={settings.subject ?? ''}
+                onValueChange={(val) => handleInputChange('subject', val)}
                 className="w-full text-xs font-medium px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
               />
               <input

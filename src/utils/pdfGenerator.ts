@@ -62,36 +62,91 @@ function getEmbeddedFontCss(): Promise<string> {
 }
 
 async function buildEmbeddedFontCss(): Promise<string> {
-  const links = Array.from(
-    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href*="fonts.googleapis.com"]')
-  );
   const wantedFamilies = /Inter|Noto Sans Devanagari/;
   const wantedSubsets = new Set(['latin', 'devanagari']);
   const blocks: string[] = [];
 
+  // 1. Collect local/same-origin @font-face rules (e.g. bundled @fontsource/noto-sans-devanagari)
+  const walkLocal = (rules: CSSRuleList, baseHref: string) => {
+    Array.from(rules).forEach((rule) => {
+      if (typeof CSSFontFaceRule !== 'undefined' && rule instanceof CSSFontFaceRule) {
+        const text = rule.cssText;
+        const family = /font-family:\s*['"]?([^;'"]+)['"]?/.exec(text)?.[1] ?? '';
+        if (wantedFamilies.test(family)) {
+          const normalized = text.replace(/url\((['"]?)([^)'"]+)\1\)/g, (_m, _q, rawUrl: string) => {
+            if (rawUrl.startsWith('data:')) return `url("${rawUrl}")`;
+            try {
+              const abs = new URL(rawUrl, baseHref).href;
+              return `url("${abs}")`;
+            } catch {
+              return `url("${rawUrl}")`;
+            }
+          });
+          blocks.push(normalized);
+        }
+      } else if ('cssRules' in rule && (rule as CSSGroupingRule).cssRules) {
+        walkLocal((rule as CSSGroupingRule).cssRules, baseHref);
+      }
+    });
+  };
+
+  Array.from(document.styleSheets).forEach((sheet) => {
+    try {
+      walkLocal(sheet.cssRules, sheet.href || window.location.href);
+    } catch {
+      // Cross-origin Google Fonts stylesheet handled below.
+    }
+  });
+
+  // 2. Also collect Google Fonts stylesheets if reachable
+  const links = Array.from(
+    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href*="fonts.googleapis.com"]')
+  );
   for (const link of links) {
-    const css = await (await fetch(link.href)).text();
-    const re = /\/\*\s*([\w-]+)\s*\*\/\s*(@font-face\s*\{[^}]*\})/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(css)) !== null) {
-      const subset = m[1];
-      const block = m[2];
-      const family = /font-family:\s*['"]?([^;'"]+)['"]?/.exec(block)?.[1] ?? '';
-      if (wantedSubsets.has(subset) && wantedFamilies.test(family)) blocks.push(block);
+    try {
+      const css = await (await fetch(link.href)).text();
+      const re = /\/\*\s*([\w-]+)\s*\*\/\s*(@font-face\s*\{[^}]*\})/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(css)) !== null) {
+        const subset = m[1];
+        const block = m[2];
+        const family = /font-family:\s*['"]?([^;'"]+)['"]?/.exec(block)?.[1] ?? '';
+        if (wantedSubsets.has(subset) && wantedFamilies.test(family)) blocks.push(block);
+      }
+    } catch {
+      // Ignore offline/network errors for remote Google Fonts when local fonts are present
     }
   }
 
-  const urls = Array.from(new Set(blocks.flatMap((b) => Array.from(b.matchAll(/url\((https?:[^)]+)\)/g)).map((x) => x[1]))));
+  const urls = Array.from(
+    new Set(
+      blocks.flatMap((b) =>
+        Array.from(b.matchAll(/url\((['"]?)(https?:[^)'"]+)\1\)/g)).map((x) => x[2])
+      )
+    )
+  );
   const dataUrls = new Map<string, string>();
   await Promise.all(
     urls.map(async (u) => {
-      const blob = await (await fetch(u)).blob();
-      dataUrls.set(u, `data:font/woff2;base64,${await blobToBase64(blob)}`);
+      try {
+        const res = await fetch(u);
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const mime = blob.type || (u.endsWith('.woff2') ? 'font/woff2' : 'font/woff');
+        dataUrls.set(u, `data:${mime};base64,${await blobToBase64(blob)}`);
+      } catch {
+        // Skip failed font URL
+      }
     })
   );
 
   return blocks
-    .map((b) => b.replace(/url\((https?:[^)]+)\)/g, (_all, u: string) => `url(${dataUrls.get(u) ?? u})`))
+    .map((b) =>
+      b.replace(/url\((['"]?)(https?:[^)'"]+)\1\)/g, (_all, _q, u: string) => {
+        const resolved = dataUrls.get(u);
+        return resolved ? `url("${resolved}")` : `url("${u}")`;
+      })
+    )
     .join('\n');
 }
 

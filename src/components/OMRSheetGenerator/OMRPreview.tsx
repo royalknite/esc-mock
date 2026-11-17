@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { OMRSettings } from '../../types';
 import { Printer, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, FileDown, CheckCircle2 } from 'lucide-react';
 import { generateA4PDFFromElements, PDFGenerationProgress, printElementContainer, isMobileOrNative } from '../../utils/pdfGenerator';
@@ -8,12 +8,36 @@ interface OMRPreviewProps {
 }
 
 export const OMRPreview: React.FC<OMRPreviewProps> = ({ settings }) => {
-  const [zoom, setZoom] = useState<number>(0.9);
+  const [userZoom, setUserZoom] = useState<number | null>(null);
+  const [fitScale, setFitScale] = useState<number>(0.9);
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
   const [pdfProgress, setPdfProgress] = useState<PDFGenerationProgress | null>(null);
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const updateScale = () => {
+      const w = el.clientWidth;
+      if (!w) return;
+      const horizontalPad = window.innerWidth < 640 ? 16 : 48;
+      const next = Math.min(0.95, Math.max(0.28, (w - horizontalPad) / 794));
+      setFitScale(Number(next.toFixed(3)));
+    };
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(el);
+    window.addEventListener('resize', updateScale);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', updateScale);
+    };
+  }, []);
+
+  const effectiveZoom = userZoom ?? fitScale;
 
   // Generate full question array
   const allQuestionNumbers: number[] = [];
@@ -123,29 +147,29 @@ export const OMRPreview: React.FC<OMRPreviewProps> = ({ settings }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 border border-slate-200">
             <button
-              onClick={() => setZoom((prev) => Math.max(0.5, prev - 0.1))}
+              onClick={() => setUserZoom(Math.max(0.28, Number((effectiveZoom - 0.1).toFixed(2))))}
               className="p-1 rounded hover:bg-white text-slate-700 cursor-pointer"
               title="Zoom Out"
             >
               <ZoomOut className="w-4 h-4" />
             </button>
             <span className="text-xs font-semibold px-1 text-slate-700">
-              {Math.round(zoom * 100)}%
+              {Math.round(effectiveZoom * 100)}%
             </span>
             <button
-              onClick={() => setZoom((prev) => Math.min(1.3, prev + 0.1))}
+              onClick={() => setUserZoom(Math.min(1.3, Number((effectiveZoom + 0.1).toFixed(2))))}
               className="p-1 rounded hover:bg-white text-slate-700 cursor-pointer"
               title="Zoom In"
             >
               <ZoomIn className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setZoom(0.9)}
+              onClick={() => setUserZoom(null)}
               className="p-1 rounded hover:bg-white text-slate-700 cursor-pointer text-xs font-medium px-1.5"
-              title="Fit"
+              title="Reset Zoom to Fit Screen"
             >
               Fit
             </button>
@@ -190,26 +214,37 @@ export const OMRPreview: React.FC<OMRPreviewProps> = ({ settings }) => {
       )}
 
       {/* Canvas / OMR Preview Container */}
-      <div className="overflow-x-auto pb-8 pt-2 flex justify-center bg-slate-200/60 rounded-2xl p-3 sm:p-6 border border-slate-300 min-h-[600px]">
+      <div
+        ref={wrapperRef}
+        className="w-full overflow-x-auto pb-6 pt-2 flex justify-center bg-slate-200/60 rounded-2xl p-2 sm:p-6 border border-slate-300"
+      >
         <div
-          ref={containerRef}
-          id="omr-preview-container"
+          className="preview-scale-box mx-auto shrink-0"
           style={{
-            transform: `scale(${zoom})`,
-            transformOrigin: 'top center',
+            width: `${Math.round(794 * effectiveZoom)}px`,
+            height: `${Math.round(1123 * effectiveZoom)}px`,
           }}
-          className="transition-transform duration-150"
         >
-          {pages.map((page, pIdx) => {
-            const isVisibleOnScreen = pIdx === currentPageIndex;
+          <div
+            ref={containerRef}
+            id="omr-preview-container"
+            style={{
+              width: '794px',
+              transform: `scale(${effectiveZoom})`,
+              transformOrigin: 'top left',
+            }}
+            className="transition-transform duration-150"
+          >
+            {pages.map((page, pIdx) => {
+              const isVisibleOnScreen = pIdx === currentPageIndex;
 
-            return (
-              <div
-                key={page.pageNumber}
-                data-page-index={pIdx}
-                className={`a4-sheet border-2 border-slate-800 rounded-2xl shadow-xl mb-8 flex flex-col justify-between text-slate-900 font-sans ${
-                  isVisibleOnScreen ? 'block' : 'hidden print:block'
-                }`}
+              return (
+                <div
+                  key={page.pageNumber}
+                  data-page-index={pIdx}
+                  className={`a4-sheet border-2 border-slate-800 rounded-2xl shadow-xl mb-8 flex-col justify-between text-slate-900 font-hindi ${
+                    isVisibleOnScreen ? 'flex' : 'hidden print:flex'
+                  }`}
                 style={{
                   width: '794px',
                   height: '1123px',
@@ -432,6 +467,7 @@ export const OMRPreview: React.FC<OMRPreviewProps> = ({ settings }) => {
               </div>
             );
           })}
+          </div>
         </div>
       </div>
     </div>

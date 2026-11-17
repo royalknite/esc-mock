@@ -1,21 +1,60 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 @layer base {
-  body {
+  html, body {
     font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: #f8fafc;
     color: #1e293b;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 }
 
 /* Devanagari specific class for perfect rendering */
 .font-hindi {
-  font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+  font-family: 'Noto Sans Devanagari', 'Inter', sans-serif !important;
 }
 
 .font-display {
-  font-family: 'Teko', 'Inter', sans-serif;
+  font-family: 'Teko', 'Inter', 'Noto Sans Devanagari', sans-serif;
+}
+
+@keyframes splashLogoPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) translateY(16px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.05) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes splashFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-splash-logo {
+  animation: splashLogoPop 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-splash-fade {
+  animation: splashFadeUp 0.7s ease-out 0.25s both;
 }
 
 /* A4 Sheet Dimensions at 96 DPI: 794px × 1123px (210mm × 297mm) */
@@ -35,6 +74,7 @@
     color: #000000 !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: visible !important;
   }
 
   .no-print {
@@ -45,12 +85,23 @@
     display: block !important;
   }
 
+  .preview-scale-box {
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
   /* Every A4 page must print, including ones hidden off-screen in the preview. */
-  #paper-preview-container {
+  #paper-preview-container,
+  #omr-preview-container,
+  #document-paper-preview {
+    width: auto !important;
     transform: none !important;
   }
 
   .a4-sheet {
+    display: flex !important;
     position: relative !important;
     left: auto !important;
     top: auto !important;

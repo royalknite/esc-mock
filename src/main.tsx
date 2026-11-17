@@ -1,4 +1,9 @@
 import {createRoot} from 'react-dom/client';
+import '@fontsource/noto-sans-devanagari/400.css';
+import '@fontsource/noto-sans-devanagari/500.css';
+import '@fontsource/noto-sans-devanagari/600.css';
+import '@fontsource/noto-sans-devanagari/700.css';
+import '@fontsource/noto-sans-devanagari/800.css';
 import App from './App.tsx';
 import './index.css';
 
